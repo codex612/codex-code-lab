@@ -2151,6 +2151,9 @@ body.auth-mode .main-content-wrapper {
   display: flex;
   align-items: center;
   gap: 1.25rem;
+  min-width: 0;
+  flex: 1;
+  margin-right: 1.5rem;
 }
 
 .leaderboard-rank-num {
@@ -2176,6 +2179,9 @@ body.auth-mode .main-content-wrapper {
   font-weight: 700;
   font-size: 1.05rem;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .leaderboard-xp-val {
