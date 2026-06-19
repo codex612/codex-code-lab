@@ -2555,5 +2555,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadState();
   renderDashboard();
   initSettingsUI();
-  showView('dashboard-view');
+  if (state.currentUser) {
+    showView('dashboard-view');
+  } else {
+    showView('signin-view');
+  }
 });
