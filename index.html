@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codex: Interactive Code Lab</title>
+  <meta name="description" content="Learn Luau (Roblox scripting), Python, and JavaScript through interactive hands-on coding lessons, quizzes, and real-time visualization.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Left Sidebar Navigation -->
+  <nav class="sidebar-nav">
+    <div class="logo-container">
+      <div class="logo-icon">C</div>
+      <div class="logo-text">Codex</div>
+    </div>
+    
+    <ul class="sidebar-menu">
+      <li class="menu-item active" id="menu-learn">
+        <span class="menu-icon">📖</span>
+        <span class="menu-text">Learn</span>
+      </li>
+      <li class="menu-item" id="menu-leaderboard">
+        <span class="menu-icon">🏆</span>
+        <span class="menu-text">Leaderboard</span>
+      </li>
+      <li class="menu-item" id="menu-quests">
+        <span class="menu-icon">🎯</span>
+        <span class="menu-text">Quests</span>
+      </li>
+      <li class="menu-item" id="menu-profile">
+        <span class="menu-icon">👤</span>
+        <span class="menu-text">Profile</span>
+      </li>
+      <li class="menu-item" id="menu-download">
+        <span class="menu-icon">📥</span>
+        <span class="menu-text">Download</span>
+      </li>
+      <li class="menu-item" id="menu-donate">
+        <span class="menu-icon">💰</span>
+        <span class="menu-text">Donate</span>
+      </li>
+      <li class="menu-item" id="menu-settings">
+        <span class="menu-icon">⚙️</span>
+        <span class="menu-text">Settings</span>
+      </li>
+      <li class="menu-item" id="menu-signin">
+        <span class="menu-icon">🔑</span>
+        <span class="menu-text">Sign In</span>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main View Area Wrapper -->
+  <div class="main-content-wrapper">
+    
+    <!-- Sticky Top Stats Bar -->
+    <div class="top-stats-header">
+      <div class="nav-stats">
+        <div class="stat-badge xp-badge">
+          <span class="badge-icon">👑</span>
+          <span>0 XP</span>
+        </div>
+        <div class="stat-badge streak-badge">
+          <span class="badge-icon">🔥</span>
+          <span>0 Days</span>
+        </div>
+        <div class="stat-badge shield-badge">
+          <span class="badge-icon">🛡️</span>
+          <span>Active</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Areas -->
+    <main>
+    
+    <!-- 1. Dashboard View -->
+    <section id="dashboard-view" class="view-section active">
+      <div class="welcome-banner">
+        <div class="welcome-text">
+          <h1>Master Coding Interactively</h1>
+          <p>Embark on structured coding tracks with live interpreters, code validation checkpoints, and a visual Roblox Workspace simulator!</p>
+        </div>
+      </div>
+      
+      <h2 class="track-selection-title">Choose a Language Track</h2>
+      <div class="tracks-grid">
+        <!-- Rendered Dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- 2. Course Path View -->
+    <section id="path-view" class="view-section">
+      <div class="path-header">
+        <button id="back-to-dashboard" class="back-btn">
+          &larr; Back to Tracks
+        </button>
+        <div class="path-title-info">
+          <h2>Language Track</h2>
+        </div>
+      </div>
+      
+      <div id="chapters-container">
+        <!-- Rendered Dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- 3. Learning Sandbox View -->
+    <section id="learning-view" class="view-section">
+      <div class="learning-split-container">
+        
+        <!-- Left Panel: Instructions -->
+        <div class="info-panel">
+          <div class="lesson-info-header">
+            <div>
+              <div class="lesson-title-meta">Chapter 1 &bull; Lesson 1</div>
+              <h2 class="lesson-title-main">Lesson Title</h2>
+            </div>
+            <button id="back-to-path" class="back-btn" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;">
+              &larr; Path
+            </button>
+          </div>
+          
+          <div class="lesson-info-scroll">
+            <div id="lesson-desc" class="lesson-text-content">
+              <!-- Rendered Dynamically via JS -->
+            </div>
+            
+            <div class="checkpoints-container">
+              <div class="checkpoint-title">
+                <span>Task Checkpoints</span>
+              </div>
+              <div id="checkpoint-list">
+                <!-- Rendered Dynamically via JS -->
+              </div>
+            </div>
+            
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+              <button id="next-lesson-btn" class="quiz-btn" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 0.5rem;" disabled>
+                Next Lesson &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Editor & Viewports -->
+        <div class="editor-panel">
+          
+          <!-- Editor Controls -->
+          <div class="editor-header">
+            <div class="editor-title">
+              <span class="lang-indicator-dot" style="background: var(--accent-blue);"></span>
+              <span>main.lua</span>
+            </div>
+            <div class="editor-actions">
+              <button id="get-hint-btn" class="editor-btn" style="border-color: rgba(131, 56, 236, 0.4); color: var(--accent-purple); font-weight: 600; display: flex; align-items: center; gap: 0.3rem;">
+                ✨ Hint (10 XP)
+              </button>
+              <button id="solve-level-btn" class="editor-btn" style="border-color: rgba(255, 190, 11, 0.4); color: var(--accent-gold); font-weight: 600; display: flex; align-items: center; gap: 0.3rem; display: none;">
+                👑 Solve (10k XP)
+              </button>
+              <button id="run-code-btn" class="editor-btn run-btn">
+                Run Code
+              </button>
+            </div>
+          </div>
+
+          <!-- Code Input Sandbox -->
+          <div class="editor-body-container">
+            <div class="editor-line-numbers" id="line-numbers-box">
+              <div>1</div>
+            </div>
+            <textarea class="code-editor-textarea" id="code-input" spellcheck="false" autocomplete="off" placeholder="Write your code here..."></textarea>
+            <pre class="code-editor-highlight"><code id="code-highlight-box"></code></pre>
+            <div id="autocomplete-box" class="autocomplete-container" style="display: none;"></div>
+          </div>
+
+          <!-- Sandbox Output / Simulation viewport -->
+          <div class="output-panel">
+            <div class="output-header">
+              <div class="output-tabs">
+                <button class="output-tab active" data-pane="console-output-pane" id="tab-console">
+                  Console Output
+                </button>
+                <button class="output-tab roblox-tab" data-pane="roblox-sim-pane" id="tab-roblox" style="display: none;">
+                  Roblox Simulator
+                </button>
+              </div>
+            </div>
+
+            <div class="output-content-container">
+              <!-- Tab 1: Text logs console -->
+              <div class="output-content-pane active" id="console-output-pane">
+                <div class="console-log-row info">> Output window ready.</div>
+              </div>
+
+              <!-- Tab 2: Roblox Canvas Viewport -->
+              <div class="output-content-pane" id="roblox-sim-pane">
+                <div class="simulator-workspace-viewport">
+                  <canvas id="simulator-canvas"></canvas>
+                  
+                  <div class="simulator-overlay">
+                    <div class="simulator-overlay-row">
+                      <span class="simulator-overlay-label">Workspace:</span>
+                      <span class="simulator-overlay-value">Active</span>
+                    </div>
+                    <div class="simulator-overlay-row">
+                      <span class="simulator-overlay-label">Baseplate:</span>
+                      <span class="simulator-overlay-value">Anchored</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. Quiz View -->
+    <section id="quiz-view" class="view-section">
+      <div class="quiz-container">
+        
+        <div class="quiz-header">
+          <span class="quiz-progress-text" id="quiz-progress-lbl">Question 1 of 5</span>
+          <div class="quiz-progress-bar-bg">
+            <div class="quiz-progress-bar-fill" id="quiz-progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="quiz-question" id="quiz-question-title">
+          Loading Question...
+        </div>
+
+        <div class="quiz-options-list" id="quiz-options">
+          <!-- Rendered Dynamically via JS -->
+        </div>
+
+        <div class="quiz-feedback" id="quiz-feedback-box">
+          Incorrect! Explanation comes here.
+        </div>
+
+        <div class="quiz-actions">
+          <button class="quiz-btn" id="quiz-submit-btn" disabled>
+            Check Answer
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. Leaderboard View -->
+    <section id="leaderboard-view" class="view-section">
+      <div class="welcome-banner" style="background: linear-gradient(135deg, #ffbe0b, #ff9600); margin-bottom: 2rem;">
+        <div class="welcome-text">
+          <h1>🏆 Codex Gold League</h1>
+          <p>Compete with coding students worldwide! Earn XP to climb the ranks.</p>
+        </div>
+      </div>
+      
+      <div style="max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem;">
+        <div class="leaderboard-list">
+          <div class="leaderboard-row rank-1">
+            <div class="leaderboard-rank-container">
+              <span class="leaderboard-rank-num">1</span>
+              <span class="leaderboard-avatar">🥇</span>
+              <span class="leaderboard-username">Builderman</span>
+            </div>
+            <span class="leaderboard-xp-val">2,450 XP</span>
+          </div>
+          
+          <div class="leaderboard-row rank-2">
+            <div class="leaderboard-rank-container">
+              <span class="leaderboard-rank-num">2</span>
+              <span class="leaderboard-avatar">🥈</span>
+              <span class="leaderboard-username">CodeNinja</span>
+            </div>
+            <span class="leaderboard-xp-val">1,890 XP</span>
+          </div>
+
+          <div class="leaderboard-row rank-3">
+            <div class="leaderboard-rank-container">
+              <span class="leaderboard-rank-num">3</span>
+              <span class="leaderboard-avatar">🥉</span>
+              <span class="leaderboard-username">Robloxian99</span>
+            </div>
+            <span class="leaderboard-xp-val">1,200 XP</span>
+          </div>
+
+          <div class="leaderboard-row user-row">
+            <div class="leaderboard-rank-container">
+              <span class="leaderboard-rank-num">4</span>
+              <span class="leaderboard-avatar">👤</span>
+              <span class="leaderboard-username" id="leaderboard-user-name">You</span>
+            </div>
+            <span class="leaderboard-xp-val" id="leaderboard-user-xp">999,999 XP</span>
+          </div>
+
+          <div class="leaderboard-row">
+            <div class="leaderboard-rank-container">
+              <span class="leaderboard-rank-num">5</span>
+              <span class="leaderboard-avatar">🐱</span>
+              <span class="leaderboard-username">PythonCoder</span>
+            </div>
+            <span class="leaderboard-xp-val">950 XP</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Quests View -->
+    <section id="quests-view" class="view-section">
+      <div class="welcome-banner" style="background: linear-gradient(135deg, var(--duo-blue), #8338ec); margin-bottom: 2rem;">
+        <div class="welcome-text">
+          <h1>🎯 Daily Quests</h1>
+          <p>Complete daily challenges to earn bonus XP and keep your mind active!</p>
+        </div>
+      </div>
+      
+      <div class="chapter-container" style="max-width: 600px; margin: 0 auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <div class="explanation-step">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <span style="font-weight: 800; font-size: 1.1rem; color: var(--duo-gold);">👑 Daily XP Target</span>
+            <span style="font-weight: 700; font-size: 0.9rem; color: var(--duo-green);">Completed</span>
+          </div>
+          <p style="color: var(--duo-text-muted); font-size: 0.85rem; margin: 0 0 1rem 0;">Earn 50 XP in any track today.</p>
+          <div class="progress-bar-bg" style="height: 12px; border-radius: 99px;">
+            <div class="progress-bar-fill" style="width: 100%; background: var(--duo-green); border-radius: 99px;"></div>
+          </div>
+          <div style="text-align: right; font-size: 0.8rem; color: var(--duo-text-muted); margin-top: 0.35rem;">50 / 50 XP</div>
+        </div>
+
+        <div class="explanation-step">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <span style="font-weight: 800; font-size: 1.1rem; color: var(--duo-blue);">📖 Learning Streak</span>
+            <span style="font-weight: 700; font-size: 0.9rem; color: var(--duo-orange);">In Progress</span>
+          </div>
+          <p style="color: var(--duo-text-muted); font-size: 0.85rem; margin: 0 0 1rem 0;">Complete 2 lessons or quizzes today.</p>
+          <div class="progress-bar-bg" style="height: 12px; border-radius: 99px;">
+            <div class="progress-bar-fill" style="width: 50%; background: var(--duo-blue); border-radius: 99px;"></div>
+          </div>
+          <div style="text-align: right; font-size: 0.8rem; color: var(--duo-text-muted); margin-top: 0.35rem;">1 / 2 Lessons</div>
+        </div>
+
+        <div class="explanation-step" style="opacity: 0.6;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <span style="font-weight: 800; font-size: 1.1rem; color: var(--text-muted);">✨ Hint Master</span>
+            <span style="font-weight: 700; font-size: 0.9rem; color: var(--text-muted);">Locked</span>
+          </div>
+          <p style="color: var(--duo-text-muted); font-size: 0.85rem; margin: 0 0 1rem 0;">Unlock hints using XP 3 times.</p>
+          <div class="progress-bar-bg" style="height: 12px; border-radius: 99px;">
+            <div class="progress-bar-fill" style="width: 0%; border-radius: 99px;"></div>
+          </div>
+          <div style="text-align: right; font-size: 0.8rem; color: var(--duo-text-muted); margin-top: 0.35rem;">0 / 3 Hints</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 7. Profile View -->
+    <section id="profile-view" class="view-section">
+      <div class="chapter-container" style="max-width: 600px; margin: 2rem auto; padding: 2rem; text-align: center;">
+        <div style="width: 100px; height: 100px; background: linear-gradient(135deg, var(--duo-blue), #8338ec); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 3.5rem; margin: 0 auto 1.5rem auto; box-shadow: 0 6px 0 rgba(0,0,0,0.3);">
+          👤
+        </div>
+        <h2 style="font-size: 2rem; margin: 0 0 0.5rem 0;">Ollie</h2>
+        <p style="color: var(--duo-text-muted); margin: 0 0 2rem 0;">Codex Developer Scholar</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 2rem;">
+          <div class="explanation-step" style="text-align: left;">
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--duo-gold);">👑 999,999</div>
+            <div style="color: var(--duo-text-muted); font-size: 0.85rem;">Total XP Earned</div>
+          </div>
+          <div class="explanation-step" style="text-align: left;">
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--duo-orange);">🔥 1 Day</div>
+            <div style="color: var(--duo-text-muted); font-size: 0.85rem;">Learning Streak</div>
+          </div>
+          <div class="explanation-step" style="text-align: left;">
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--duo-blue);">🛡️ Shield</div>
+            <div style="color: var(--duo-text-muted); font-size: 0.85rem;">Streak Freeze Active</div>
+          </div>
+          <div class="explanation-step" style="text-align: left;">
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--duo-green);">💎 120</div>
+            <div style="color: var(--duo-text-muted); font-size: 0.85rem;">Gems Balance</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+          <button class="quiz-btn" style="flex: 1; background: var(--duo-gold) !important; box-shadow: 0 4px 0 var(--duo-orange) !important; margin: 0; padding: 0.75rem 1rem !important;" id="btn-profile-settings">⚙️ Settings</button>
+          <button class="quiz-btn" style="flex: 1; background: var(--duo-green) !important; box-shadow: 0 4px 0 var(--duo-green-shadow) !important; margin: 0; padding: 0.75rem 1rem !important;" id="btn-profile-donate">💰 Donate</button>
+        </div>
+        <button class="quiz-btn" style="width: 100%;" id="btn-reset-save">Reset Learning Progress</button>
+        <button class="quiz-btn" style="width: 100%; margin-top: 1rem; background: #ff4c4c !important; box-shadow: 0 4px 0 #cc3c3c !important;" id="btn-profile-signout">Sign Out</button>
+      </div>
+    </section>
+
+    <!-- 8. Download View -->
+    <section id="download-view" class="view-section">
+      <div class="welcome-banner" style="background: linear-gradient(135deg, var(--accent-purple), var(--duo-blue)); margin-bottom: 2rem;">
+        <div class="welcome-text">
+          <h1>📥 Get Codex Desktop</h1>
+          <p>Take your interactive scripting lessons offline! Available with full feature parity on all desktop operating systems.</p>
+        </div>
+      </div>
+      
+      <div class="tracks-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+        <!-- macOS -->
+        <div class="track-card luau" style="border: 2px solid var(--duo-border); background: var(--duo-card-bg); height: auto; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; cursor: default;">
+          <div class="track-badge" style="font-size: 2.5rem; background: rgba(255,255,255,0.05); width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">🍎</div>
+          <h3 style="margin-top: 0.5rem; font-size: 1.4rem;">macOS</h3>
+          <p style="color: var(--duo-text-muted); font-size: 0.85rem; line-height: 1.4; flex-grow: 1;">Compatible with macOS Monterey, Ventura, Sonoma, and Sequoia. Native support for Apple Silicon (M1/M2/M3) and Intel chips.</p>
+          <a href="dist/Codex-1.0.0-arm64.dmg" download class="quiz-btn" style="width: 100%; text-decoration: none; padding: 0.75rem; display: inline-block; text-align: center; box-sizing: border-box; background: var(--duo-blue) !important; box-shadow: 0 4px 0 var(--duo-blue-shadow) !important;" onclick="return handleAppDownload(event, 'Codex-1.0.0-arm64.dmg', 'npm run build:mac')">Download .DMG</a>
+        </div>
+
+        <!-- Windows -->
+        <div class="track-card python" style="border: 2px solid var(--duo-border); background: var(--duo-card-bg); height: auto; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; cursor: default;">
+          <div class="track-badge" style="font-size: 2.5rem; background: rgba(255,255,255,0.05); width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">🪟</div>
+          <h3 style="margin-top: 0.5rem; font-size: 1.4rem;">Windows</h3>
+          <p style="color: var(--duo-text-muted); font-size: 0.85rem; line-height: 1.4; flex-grow: 1;">Compatible with Windows 10 and 11 (64-bit). Features DirectX-accelerated 3D Roblox workspace simulations.</p>
+          <a href="dist/Codex Setup 1.0.0.exe" download class="quiz-btn" style="width: 100%; text-decoration: none; padding: 0.75rem; display: inline-block; text-align: center; box-sizing: border-box; background: var(--duo-green) !important; box-shadow: 0 4px 0 var(--duo-green-shadow) !important;" onclick="return handleAppDownload(event, 'Codex Setup 1.0.0.exe', 'npm run build:win')">Download .EXE</a>
+        </div>
+
+        <!-- Linux -->
+        <div class="track-card js" style="border: 2px solid var(--duo-border); background: var(--duo-card-bg); height: auto; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; cursor: default;">
+          <div class="track-badge" style="font-size: 2.5rem; background: rgba(255,255,255,0.05); width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">🐧</div>
+          <h3 style="margin-top: 0.5rem; font-size: 1.4rem;">Linux</h3>
+          <p style="color: var(--duo-text-muted); font-size: 0.85rem; line-height: 1.4; flex-grow: 1;">Available as a sandboxed AppImage and native Debian package. Compatible with Ubuntu, Fedora, and Arch Linux.</p>
+          <a href="dist/Codex-1.0.0.AppImage" download class="quiz-btn" style="width: 100%; text-decoration: none; padding: 0.75rem; display: inline-block; text-align: center; box-sizing: border-box; background: var(--accent-purple) !important; box-shadow: 0 4px 0 #5f27cd !important;" onclick="return handleAppDownload(event, 'Codex-1.0.0.AppImage', 'npm run build:linux')">Download .AppImage</a>
+        </div>
+      </div>
+
+      <div class="chapter-container" style="padding: 2rem;">
+        <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: #fff;">💡 Desktop App Highlights</h3>
+        <div class="explanations-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+          <div class="explanation-step" style="border-left: 4px solid var(--duo-green);">
+            <div style="font-weight: 700; margin-bottom: 0.25rem;">🌐 Offline Sandbox Mode</div>
+            <p style="font-size: 0.8rem; color: var(--duo-text-muted); margin: 0;">Code, run, and practice without an active internet connection.</p>
+          </div>
+          <div class="explanation-step" style="border-left: 4px solid var(--duo-blue);">
+            <div style="font-weight: 700; margin-bottom: 0.25rem;">🛠️ Roblox Studio Connection</div>
+            <p style="font-size: 0.8rem; color: var(--duo-text-muted); margin: 0;">Export your scripts directly to active Roblox Studio XML objects.</p>
+          </div>
+          <div class="explanation-step" style="border-left: 4px solid var(--accent-purple);">
+            <div style="font-weight: 700; margin-bottom: 0.25rem;">⌨️ Native Shortcuts</div>
+            <p style="font-size: 0.8rem; color: var(--duo-text-muted); margin: 0;">Full Vim/Emacs keybindings and custom editor themes.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. Settings View -->
+    <section id="settings-view" class="view-section">
+      <div class="welcome-banner" style="background: linear-gradient(135deg, var(--duo-gold), var(--duo-orange)); margin-bottom: 2rem;">
+        <div class="welcome-text">
+          <h1>⚙️ Customization Settings</h1>
+          <p>Personalize your experience! Adjust sound effects, upload custom sound files, and change layout themes.</p>
+        </div>
+      </div>
+      
+      <div class="chapter-container" style="max-width: 600px; margin: 0 auto; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Theme Customizer Section -->
+        <div>
+          <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 800;">🎨 App Theme</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem;">
+            <button class="quiz-option" id="theme-btn-obsidian" style="padding: 0.75rem !important; font-size: 0.85rem !important; border-radius: 12px !important; text-align: center;">Obsidian Dark</button>
+            <button class="quiz-option" id="theme-btn-duoLight" style="padding: 0.75rem !important; font-size: 0.85rem !important; border-radius: 12px !important; text-align: center;">Duolingo Light</button>
+            <button class="quiz-option" id="theme-btn-cyberpunk" style="padding: 0.75rem !important; font-size: 0.85rem !important; border-radius: 12px !important; text-align: center;">Neon Cyberpunk</button>
+            <button class="quiz-option" id="theme-btn-terminal" style="padding: 0.75rem !important; font-size: 0.85rem !important; border-radius: 12px !important; text-align: center;">Retro Terminal</button>
+            <button class="quiz-option" id="theme-btn-emerald" style="padding: 0.75rem !important; font-size: 0.85rem !important; border-radius: 12px !important; text-align: center;">Forest Emerald</button>
+          </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--duo-border); margin: 0.5rem 0;">
+
+        <!-- Audio Customizer Section -->
+        <div>
+          <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 800;">🔊 Audio Settings</h3>
+          
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
+            <input type="checkbox" id="sound-enabled-checkbox" checked style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="sound-enabled-checkbox" style="font-size: 0.95rem; font-weight: 600; cursor: pointer; color: var(--text-primary);">Enable Sound Effects</label>
+          </div>
+
+          <!-- Click Sound Select -->
+          <div style="margin-bottom: 1.25rem;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.5rem;">Selection/Click Sound Preset</label>
+            <select id="click-sound-select" class="quiz-option" style="width: 100%; border: 2px solid var(--duo-border); padding: 0.5rem 1rem !important; background: var(--duo-card-bg); color: var(--text-primary); cursor: pointer; font-size: 0.9rem;">
+              <option value="duo-ping">Duolingo Sweet Ping (Preset)</option>
+              <option value="retro-beep">Retro Square Beep (Preset)</option>
+              <option value="mech-click">Mechanical Thud (Preset)</option>
+              <option value="typewriter">Typewriter Clack (Preset)</option>
+              <option value="custom">Custom Uploaded Audio</option>
+            </select>
+          </div>
+
+          <!-- Type Sound Select -->
+          <div style="margin-bottom: 1.25rem;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.5rem;">Keyboard Typing Sound Preset</label>
+            <select id="type-sound-select" class="quiz-option" style="width: 100%; border: 2px solid var(--duo-border); padding: 0.5rem 1rem !important; background: var(--duo-card-bg); color: var(--text-primary); cursor: pointer; font-size: 0.9rem;">
+              <option value="mech-click">Mechanical Switch (Preset)</option>
+              <option value="typewriter">Typewriter Clack (Preset)</option>
+              <option value="retro-beep">Retro Beep (Preset)</option>
+              <option value="duo-ping">Duolingo Ping (Preset)</option>
+              <option value="custom">Custom Uploaded Audio</option>
+            </select>
+          </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--duo-border); margin: 0.5rem 0;">
+
+        <!-- Custom Audio Uploads Section -->
+        <div>
+          <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 800;">📤 Upload Custom Audio</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            <!-- Click Sound Uploader -->
+            <div class="explanation-step" style="text-align: left; padding: 1rem;">
+              <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--duo-blue);">Click Sound File</div>
+              <input type="file" id="click-sound-file" accept="audio/*" style="display: none;">
+              <button class="quiz-btn" style="width: 100%; font-size: 0.75rem !important; padding: 0.5rem 1rem !important;" onclick="document.getElementById('click-sound-file').click()">Upload Audio</button>
+              <div id="click-sound-status" style="font-size: 0.75rem; color: var(--duo-text-muted); margin-top: 0.5rem; text-align: center;">No file uploaded</div>
+            </div>
+
+            <!-- Type Sound Uploader -->
+            <div class="explanation-step" style="text-align: left; padding: 1rem;">
+              <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--duo-green);">Typing Sound File</div>
+              <input type="file" id="type-sound-file" accept="audio/*" style="display: none;">
+              <button class="quiz-btn" style="width: 100%; font-size: 0.75rem !important; padding: 0.5rem 1rem !important;" onclick="document.getElementById('type-sound-file').click()">Upload Audio</button>
+              <div id="type-sound-status" style="font-size: 0.75rem; color: var(--duo-text-muted); margin-top: 0.5rem; text-align: center;">No file uploaded</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 10. Sign In View -->
+    <section id="signin-view" class="view-section">
+      <div class="welcome-banner" style="background: linear-gradient(135deg, var(--duo-blue), var(--accent-purple)); margin-bottom: 2rem;">
+        <div class="welcome-text">
+          <h1 id="auth-title-header">🔑 Join Codex</h1>
+          <p id="auth-desc-header">Sign in or create an account to start your coding adventure and track progress!</p>
+        </div>
+      </div>
+      
+      <div class="chapter-container" style="max-width: 400px; margin: 2rem auto; padding: 2.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+        <h2 id="auth-title" style="font-size: 1.5rem; text-align: center; margin-bottom: 0.5rem; color: #fff;">Log In</h2>
+        
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.5rem;">Username</label>
+          <input type="text" id="signin-username" class="quiz-option" placeholder="Enter username..." style="width: 100%; border: 2px solid var(--duo-border); padding: 0.75rem 1rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.95rem;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.5rem;">Password</label>
+          <input type="password" id="signin-password" class="quiz-option" placeholder="Enter password..." style="width: 100%; border: 2px solid var(--duo-border); padding: 0.75rem 1rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.95rem;">
+        </div>
+
+        <!-- Confirm Password (hidden by default in Login mode) -->
+        <div id="confirm-password-wrapper" style="display: none;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.5rem;">Confirm Password</label>
+          <input type="password" id="signin-confirm-password" class="quiz-option" placeholder="Confirm password..." style="width: 100%; border: 2px solid var(--duo-border); padding: 0.75rem 1rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.95rem;">
+        </div>
+
+        <div id="signin-error" style="color: #ff4c4c; font-size: 0.85rem; font-weight: 700; text-align: center; display: none; margin-top: 0.5rem;">Invalid Username or Password. Please try again!</div>
+        <button class="quiz-btn" id="btn-submit-signin" style="width: 100%; margin-top: 1rem; padding: 0.85rem !important;">Log In</button>
+        
+        <div style="font-size: 0.85rem; text-align: center; margin-top: 0.5rem;">
+          <a href="#" id="auth-toggle-link" style="color: var(--duo-blue); font-weight: 700; text-decoration: none;">Don't have an account? Sign Up</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. Admin Panel View -->
+    <section id="admin-view" class="view-section">
+      <div class="welcome-banner" style="background: linear-gradient(135deg, #ff007f, var(--accent-purple)); margin-bottom: 2rem;">
+        <div class="welcome-text">
+          <h1>👑 Secret Developer Admin Panel</h1>
+          <p>Modify local user stats, adjust links for donation payouts, and manage platform configurations.</p>
+        </div>
+      </div>
+      
+      <div class="chapter-container" style="max-width: 600px; margin: 0 auto; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <!-- Stats Modifier -->
+        <div>
+          <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 800; color: var(--accent-gold);">⚡ Grant Stats (XP & Streaks)</h3>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.35rem;">Set User XP</label>
+              <input type="number" id="admin-xp-input" class="quiz-option" placeholder="e.g. 5000" style="width: 100%; border: 2px solid var(--duo-border); padding: 0.5rem 0.75rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.9rem;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.35rem;">Set Days Streak</label>
+              <input type="number" id="admin-streak-input" class="quiz-option" placeholder="e.g. 100" style="width: 100%; border: 2px solid var(--duo-border); padding: 0.5rem 0.75rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.9rem;">
+            </div>
+          </div>
+          <button class="quiz-btn" id="btn-admin-apply-stats" style="width: 100%; font-size: 0.85rem !important; padding: 0.6rem 1rem !important;">Apply Custom Stats</button>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--duo-border); margin: 0.5rem 0;">
+
+        <!-- Donation Links Editor -->
+        <div>
+          <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 800; color: var(--duo-green);">💰 Donation Payout Links</h3>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.35rem;">PayPal Link</label>
+              <input type="text" id="admin-paypal-input" class="quiz-option" placeholder="PayPal URL..." style="width: 100%; border: 2px solid var(--duo-border); padding: 0.5rem 0.75rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.9rem;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.35rem;">BuyMeACoffee Link</label>
+              <input type="text" id="admin-coffee-input" class="quiz-option" placeholder="BuyMeACoffee URL..." style="width: 100%; border: 2px solid var(--duo-border); padding: 0.5rem 0.75rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.9rem;">
+            </div>
+          </div>
+          <button class="quiz-btn" id="btn-admin-apply-links" style="width: 100%; font-size: 0.85rem !important; padding: 0.6rem 1rem !important; background: var(--duo-green) !important; box-shadow: 0 4px 0 var(--duo-green-shadow) !important;">Save Payout Links</button>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--duo-border); margin: 0.5rem 0;">
+
+        <!-- App Installer Downloads Editor -->
+        <div>
+          <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 800; color: var(--duo-blue);">📦 Hosted App Download Links</h3>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.35rem;">macOS DMG Download Link</label>
+              <input type="text" id="admin-mac-link-input" class="quiz-option" placeholder="e.g. https://github.com/.../Codex.dmg" style="width: 100%; border: 2px solid var(--duo-border); padding: 0.5rem 0.75rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.9rem;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.35rem;">Windows EXE Download Link</label>
+              <input type="text" id="admin-win-link-input" class="quiz-option" placeholder="e.g. https://github.com/.../Codex.exe" style="width: 100%; border: 2px solid var(--duo-border); padding: 0.5rem 0.75rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.9rem;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--duo-text-muted); margin-bottom: 0.35rem;">Linux AppImage Download Link</label>
+              <input type="text" id="admin-linux-link-input" class="quiz-option" placeholder="e.g. https://github.com/.../Codex.AppImage" style="width: 100%; border: 2px solid var(--duo-border); padding: 0.5rem 0.75rem !important; background: var(--duo-card-bg); color: var(--text-primary); font-size: 0.9rem;">
+            </div>
+          </div>
+          <button class="quiz-btn" id="btn-admin-apply-app-links" style="width: 100%; font-size: 0.85rem !important; padding: 0.6rem 1rem !important; background: var(--duo-blue) !important; box-shadow: 0 4px 0 var(--duo-blue-shadow) !important;">Save App Installer Links</button>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--duo-border); margin: 0.5rem 0;">
+
+        <!-- Sign Out -->
+        <button class="quiz-btn" id="btn-admin-signout" style="width: 100%; background: #ff4c4c !important; box-shadow: 0 4px 0 #cc3c3c !important; padding: 0.75rem !important;">Sign Out from Admin Panel</button>
+      </div>
+    </section>
+
+    <!-- 12. Donate View -->
+    <section id="donate-view" class="view-section">
+      <div class="welcome-banner" style="background: linear-gradient(135deg, var(--duo-green), #78e08f); margin-bottom: 2rem;">
+        <div class="welcome-text">
+          <h1>💰 Support Codex Development</h1>
+          <p>Codex is completely free and open-source. Help support active server costs, offline compilers, and features research!</p>
+        </div>
+      </div>
+      
+      <div class="tracks-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+        <!-- PayPal -->
+        <div class="track-card luau" style="border: 2px solid var(--duo-border); background: var(--duo-card-bg); height: auto; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; cursor: default;">
+          <div class="track-badge" style="font-size: 2.5rem; background: rgba(255,255,255,0.05); width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">💳</div>
+          <h3 style="margin-top: 0.5rem; font-size: 1.4rem;">PayPal Payout</h3>
+          <p style="color: var(--duo-text-muted); font-size: 0.85rem; line-height: 1.4; flex-grow: 1;">Support the project instantly via credit card or digital wallet transfers.</p>
+          <a href="#" id="donate-paypal-link" target="_blank" class="quiz-btn" style="width: 100%; text-decoration: none; padding: 0.75rem; display: inline-block; text-align: center; box-sizing: border-box; background: var(--duo-blue) !important; box-shadow: 0 4px 0 var(--duo-blue-shadow) !important;">Donate PayPal</a>
+        </div>
+
+        <!-- BuyMeACoffee -->
+        <div class="track-card python" style="border: 2px solid var(--duo-border); background: var(--duo-card-bg); height: auto; padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; cursor: default;">
+          <div class="track-badge" style="font-size: 2.5rem; background: rgba(255,255,255,0.05); width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">☕</div>
+          <h3 style="margin-top: 0.5rem; font-size: 1.4rem;">Buy Me A Coffee</h3>
+          <p style="color: var(--duo-text-muted); font-size: 0.85rem; line-height: 1.4; flex-grow: 1;">A simple and fun way to buy the developer a coffee to fuel coding sessions!</p>
+          <a href="#" id="donate-coffee-link" target="_blank" class="quiz-btn" style="width: 100%; text-decoration: none; padding: 0.75rem; display: inline-block; text-align: center; box-sizing: border-box; background: var(--duo-green) !important; box-shadow: 0 4px 0 var(--duo-green-shadow) !important;">Buy a Coffee</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  </div>
+
+  <!-- Load JS Modules -->
+  <script src="js/content.js"></script>
+  <script src="js/simulator.js"></script>
+  <script src="js/interpreter.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
