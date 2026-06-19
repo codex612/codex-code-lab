@@ -2551,6 +2551,155 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Auto-update checker for Electron desktop app
+  async function checkAppUpdates() {
+    if (!window.electronAPI) return; // Only run inside Electron desktop client
+
+    try {
+      const currentVersion = await window.electronAPI.getCurrentVersion();
+      const response = await fetch('https://api.github.com/repos/codex612/codex-code-lab/releases/latest');
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const latestVersion = data.tag_name.replace(/^v/, ''); // Remove leading 'v'
+
+      // Compare versions
+      if (isNewerVersion(latestVersion, currentVersion)) {
+        // Find correct installer URL for platform
+        const platform = window.electronAPI.getPlatform();
+        let targetAsset = null;
+        let filename = '';
+
+        if (platform === 'darwin') {
+          targetAsset = data.assets.find(asset => asset.name.endsWith('.dmg'));
+          filename = `Codex-${latestVersion}-arm64.dmg`;
+        } else if (platform === 'win32') {
+          targetAsset = data.assets.find(asset => asset.name.endsWith('.exe'));
+          filename = `Codex.Setup.${latestVersion}.exe`;
+        } else {
+          // Linux
+          targetAsset = data.assets.find(asset => asset.name.endsWith('.AppImage'));
+          filename = `Codex-${latestVersion}.AppImage`;
+        }
+
+        if (targetAsset) {
+          showUpdatePromptModal(latestVersion, targetAsset.browser_download_url, filename);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to check for updates:", e);
+    }
+  }
+
+  // Version comparator helper (returns true if v1 > v2)
+  function isNewerVersion(v1, v2) {
+    const parts1 = v1.split('.').map(Number);
+    const parts2 = v2.split('.').map(Number);
+    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+      const p1 = parts1[i] || 0;
+      const p2 = parts2[i] || 0;
+      if (p1 > p2) return true;
+      if (p1 < p2) return false;
+    }
+    return false;
+  }
+
+  function showUpdatePromptModal(latestVersion, downloadUrl, filename) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.id = 'update-prompt-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    modal.innerHTML = `
+      <div class="chapter-container" style="max-width: 450px; padding: 2.5rem; text-align: center; display: flex; flex-direction: column; gap: 1.5rem;">
+        <h2 style="font-size: 1.6rem; color: #fff; margin-bottom: 0.5rem; font-weight: 800;">📥 Update Required</h2>
+        <p style="color: var(--duo-text-muted); font-size: 0.95rem; line-height: 1.5;">
+          A new version of Codex is available: <strong style="color: var(--accent-gold);">v${latestVersion}</strong>.<br>
+          An update is needed to continue using the application.
+        </p>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+          <button class="quiz-btn" id="btn-update-now" style="flex: 1; padding: 0.85rem !important; background: var(--duo-green) !important; box-shadow: 0 4px 0 var(--duo-green-shadow) !important;">Install Now</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    document.getElementById('btn-update-now').addEventListener('click', () => {
+      modal.remove();
+      showUpdateDownloadingModal(downloadUrl, filename);
+    });
+  }
+
+  function showUpdateDownloadingModal(downloadUrl, filename) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.id = 'update-downloading-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    modal.innerHTML = `
+      <div class="chapter-container" style="max-width: 450px; padding: 2.5rem; text-align: center; display: flex; flex-direction: column; gap: 1.5rem; width: 90%;">
+        <h2 style="font-size: 1.6rem; color: #fff; margin-bottom: 0.5rem; font-weight: 800;">📥 Downloading Update...</h2>
+        <p id="update-download-status" style="color: var(--duo-text-muted); font-size: 0.9rem;">Connecting to server...</p>
+        <div style="width: 100%; height: 12px; background: var(--duo-border); border-radius: 6px; overflow: hidden; margin: 0.5rem 0;">
+          <div id="update-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--duo-blue), var(--accent-purple)); transition: width 0.1s ease; border-radius: 6px;"></div>
+        </div>
+        <p id="update-percent-text" style="color: #fff; font-weight: 800; font-size: 1.1rem;">0%</p>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    window.electronAPI.startUpdate(downloadUrl, filename);
+
+    window.electronAPI.onUpdateProgress((progress) => {
+      document.getElementById('update-progress-bar').style.width = `${progress}%`;
+      document.getElementById('update-percent-text').innerText = `${progress}%`;
+      document.getElementById('update-download-status').innerText = `Downloading installation package...`;
+    });
+
+    window.electronAPI.onUpdateError((message) => {
+      modal.innerHTML = `
+        <div class="chapter-container" style="max-width: 450px; padding: 2.5rem; text-align: center; display: flex; flex-direction: column; gap: 1.5rem;">
+          <h2 style="font-size: 1.6rem; color: #ff4c4c; margin-bottom: 0.5rem; font-weight: 800;">❌ Update Failed</h2>
+          <p style="color: var(--duo-text-muted); font-size: 0.95rem; line-height: 1.5;">
+            An error occurred while downloading the update:<br>
+            <span style="color: #ff8888; font-family: monospace; display: block; margin-top: 0.5rem;">${message}</span>
+          </p>
+          <button class="quiz-btn" onclick="document.getElementById('update-downloading-modal').remove()" style="padding: 0.85rem !important; background: #ff4c4c !important; box-shadow: 0 4px 0 #cc3c3c !important;">Close</button>
+        </div>
+      `;
+    });
+
+    window.electronAPI.onUpdateComplete(() => {
+      document.getElementById('update-download-status').innerText = `Download complete! Running installer and restarting...`;
+      document.getElementById('update-progress-bar').style.width = `100%`;
+      document.getElementById('update-percent-text').innerText = `100%`;
+    });
+  }
+
   // Initialization
   loadState();
   renderDashboard();
@@ -2560,4 +2709,5 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     showView('signin-view');
   }
+  checkAppUpdates();
 });
