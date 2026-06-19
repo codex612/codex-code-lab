@@ -604,11 +604,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconEl = tab.querySelector('.menu-icon');
     const textEl = tab.querySelector('.menu-text');
     if (state.isAdmin) {
+      tab.style.display = '';
       if (iconEl) iconEl.innerText = '👑';
       if (textEl) textEl.innerText = 'Admin Panel';
     } else {
-      if (iconEl) iconEl.innerText = '🔑';
-      if (textEl) textEl.innerText = 'Sign In';
+      tab.style.display = 'none';
     }
   }
 
