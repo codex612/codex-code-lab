@@ -33,6 +33,7 @@ jobs:
           npm ci
 
       - name: Compile Application Installer
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
