@@ -626,10 +626,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const winBtn = document.querySelector('#download-view .track-card.python a');
     const linuxBtn = document.querySelector('#download-view .track-card.js a');
 
-    if (state.hostedAppLinks) {
+    if (state.hostedAppLinks && (state.hostedAppLinks.mac || state.hostedAppLinks.win || state.hostedAppLinks.linux)) {
       if (macBtn && state.hostedAppLinks.mac) macBtn.href = state.hostedAppLinks.mac;
       if (winBtn && state.hostedAppLinks.win) winBtn.href = state.hostedAppLinks.win;
       if (linuxBtn && state.hostedAppLinks.linux) linuxBtn.href = state.hostedAppLinks.linux;
+    } else {
+      // Fallback: Fetch latest release assets from GitHub dynamically
+      fetch('https://api.github.com/repos/codex612/codex-code-lab/releases/latest')
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error('Failed to fetch latest release metadata');
+        })
+        .then(data => {
+          const macAsset = data.assets.find(asset => asset.name.endsWith('.dmg'));
+          const winAsset = data.assets.find(asset => asset.name.endsWith('.exe'));
+          const linuxAsset = data.assets.find(asset => asset.name.endsWith('.AppImage'));
+
+          if (macBtn && macAsset) macBtn.href = macAsset.browser_download_url;
+          if (winBtn && winAsset) winBtn.href = winAsset.browser_download_url;
+          if (linuxBtn && linuxAsset) linuxBtn.href = linuxAsset.browser_download_url;
+        })
+        .catch(err => {
+          console.error("Error setting dynamic download links:", err);
+          // Standard hardcoded fallback URLs in case GitHub API fails
+          if (macBtn) macBtn.href = "https://github.com/codex612/codex-code-lab/releases/latest";
+          if (winBtn) winBtn.href = "https://github.com/codex612/codex-code-lab/releases/latest";
+          if (linuxBtn) linuxBtn.href = "https://github.com/codex612/codex-code-lab/releases/latest";
+        });
     }
   }
 
