@@ -281,13 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const globalConfigSaved = localStorage.getItem('codex_global_config');
     let globalConfig = {
       donationLinks: {
-        paypal: 'https://www.paypal.com/donate/?business=irwinevie52@gmail.com&no_recurring=0&currency_code=USD',
+        paypal: 'HTTPS://WWW.PAYPAL.COM/DONATE/?BUSINESS=IRWINEVIE52@GMAIL.COM&NO_RECURRING=0&CURRENCY_CODE=USD',
         buyMeACoffee: 'https://www.buymeacoffee.com/irwinevie'
       },
       hostedAppLinks: {
-        mac: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9-arm64.dmg',
-        win: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex.Setup.1.0.9.exe',
-        linux: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9.AppImage'
+        mac: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10-arm64.dmg',
+        win: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex.Setup.1.0.10.exe',
+        linux: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10.AppImage'
       }
     };
     if (globalConfigSaved) {
@@ -295,26 +295,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const parsed = JSON.parse(globalConfigSaved);
         // Auto-heal legacy default donation links to user's links
         if (parsed.donationLinks) {
-          if (!parsed.donationLinks.paypal || parsed.donationLinks.paypal.toLowerCase().includes('paypal.me/ollieirwin')) {
-            parsed.donationLinks.paypal = 'https://www.paypal.com/donate/?business=irwinevie52@gmail.com&no_recurring=0&currency_code=USD';
+          if (!parsed.donationLinks.paypal || 
+              parsed.donationLinks.paypal.toLowerCase().includes('paypal.me/ollieirwin') ||
+              parsed.donationLinks.paypal === 'https://www.paypal.com/donate/?business=irwinevie52@gmail.com&no_recurring=0&currency_code=USD') {
+            parsed.donationLinks.paypal = 'HTTPS://WWW.PAYPAL.COM/DONATE/?BUSINESS=IRWINEVIE52@GMAIL.COM&NO_RECURRING=0&CURRENCY_CODE=USD';
           }
           if (!parsed.donationLinks.buyMeACoffee || parsed.donationLinks.buyMeACoffee.toLowerCase().includes('buymeacoffee.com/ollieirwin')) {
             parsed.donationLinks.buyMeACoffee = 'https://www.buymeacoffee.com/irwinevie';
           }
         }
-        // Auto-heal legacy v1.0.7 / v1.0.8 default links to v1.0.9 in localStorage
+        // Auto-heal legacy default links to v1.0.10 in localStorage
         if (parsed.hostedAppLinks) {
           if (parsed.hostedAppLinks.mac === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.7/Codex-1.0.7-arm64.dmg' ||
-              parsed.hostedAppLinks.mac === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.8/Codex-1.0.8-arm64.dmg') {
-            parsed.hostedAppLinks.mac = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9-arm64.dmg';
+              parsed.hostedAppLinks.mac === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.8/Codex-1.0.8-arm64.dmg' ||
+              parsed.hostedAppLinks.mac === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9-arm64.dmg') {
+            parsed.hostedAppLinks.mac = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10-arm64.dmg';
           }
           if (parsed.hostedAppLinks.win === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.7/Codex.Setup.1.0.7.exe' ||
-              parsed.hostedAppLinks.win === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.8/Codex.Setup.1.0.8.exe') {
-            parsed.hostedAppLinks.win = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex.Setup.1.0.9.exe';
+              parsed.hostedAppLinks.win === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.8/Codex.Setup.1.0.8.exe' ||
+              parsed.hostedAppLinks.win === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex.Setup.1.0.9.exe') {
+            parsed.hostedAppLinks.win = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex.Setup.1.0.10.exe';
           }
           if (parsed.hostedAppLinks.linux === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.7/Codex-1.0.7.AppImage' ||
-              parsed.hostedAppLinks.linux === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.8/Codex-1.0.8.AppImage') {
-            parsed.hostedAppLinks.linux = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9.AppImage';
+              parsed.hostedAppLinks.linux === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.8/Codex-1.0.8.AppImage' ||
+              parsed.hostedAppLinks.linux === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9.AppImage') {
+            parsed.hostedAppLinks.linux = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10.AppImage';
           }
         }
         globalConfig = { ...globalConfig, ...parsed };
