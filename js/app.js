@@ -281,13 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const globalConfigSaved = localStorage.getItem('codex_global_config');
     let globalConfig = {
       donationLinks: {
-        paypal: 'https://paypal.me/ollieirwin',
+        paypal: 'https://www.paypal.com/donate/?business=irwinevie52@gmail.com&no_recurring=0&currency_code=USD',
         buyMeACoffee: 'https://buymeacoffee.com/ollieirwin'
       },
       hostedAppLinks: {
-        mac: '',
-        win: '',
-        linux: ''
+        mac: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.7/Codex-1.0.7-arm64.dmg',
+        win: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.7/Codex.Setup.1.0.7.exe',
+        linux: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.7/Codex-1.0.7.AppImage'
       }
     };
     if (globalConfigSaved) {
