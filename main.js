@@ -4,6 +4,43 @@ const https = require('https');
 const fs = require('fs');
 const { exec, spawn } = require('child_process');
 
+const http = require('http');
+
+let syncCode = "-- No script synced yet from Codex Code Lab";
+let syncServerInstance = null;
+
+function startSyncServer() {
+  if (syncServerInstance) return;
+  
+  syncServerInstance = http.createServer((req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(200);
+      res.end();
+      return;
+    }
+
+    if (req.url === '/get-script') {
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end(syncCode);
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not Found');
+    }
+  });
+
+  syncServerInstance.listen(50535, '127.0.0.1', () => {
+    console.log('[Codex Sync Server] Running on http://127.0.0.1:50535');
+  });
+
+  syncServerInstance.on('error', (err) => {
+    console.error('[Codex Sync Server] Error:', err);
+  });
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
@@ -21,6 +58,7 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  startSyncServer();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -33,6 +71,11 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+// IPC Handler to update synced Roblox code
+ipcMain.on('update-sync-code', (event, code) => {
+  syncCode = code;
 });
 
 // IPC Handler for App Version

@@ -29,7 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
       mac: '',
       win: '',
       linux: ''
-    }
+    },
+    gems: 120,
+    streakFreezeCount: 0,
+    unlockedSoundPacks: ['duo-ping', 'retro-beep', 'mech-click', 'typewriter'],
+    unlockedAvatars: ['👤', '🐱'],
+    selectedAvatar: '👤',
+    unlockedLeaderboardGlow: false,
+    leaderboardGlowColor: 'none',
+    playgrounds: [],
+    arenaStats: { wins: 0, losses: 0, rank: 'Bronze', xp: 0 }
   };
   let hintsUsedInCurrentLesson = 0;
 
@@ -87,6 +96,22 @@ document.addEventListener('DOMContentLoaded', () => {
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
         osc.start(now);
         osc.stop(now + 0.04);
+      } else if (presetName === 'arcade') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+        gainNode.gain.setValueAtTime(0.08, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (presetName === 'futuristic') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.linearRampToValueAtTime(220, now + 0.2);
+        gainNode.gain.setValueAtTime(0.1, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
       }
     } catch (e) {
       console.warn("Synth play failed", e);
@@ -233,6 +258,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saved) {
       try {
         state = { ...state, ...JSON.parse(saved) };
+        
+        // Safety migrations for v1.0.12 upgrades
+        if (state.gems === undefined) state.gems = 120;
+        if (state.streakFreezeCount === undefined) state.streakFreezeCount = 0;
+        if (!state.unlockedSoundPacks) state.unlockedSoundPacks = ['duo-ping', 'retro-beep', 'mech-click', 'typewriter'];
+        if (!state.unlockedAvatars) state.unlockedAvatars = ['👤', '🐱'];
+        if (!state.selectedAvatar) state.selectedAvatar = '👤';
+        if (state.unlockedLeaderboardGlow === undefined) state.unlockedLeaderboardGlow = false;
+        if (state.leaderboardGlowColor === undefined) state.leaderboardGlowColor = 'none';
+        if (!state.playgrounds) state.playgrounds = [];
+        if (!state.arenaStats) state.arenaStats = { wins: 0, losses: 0, rank: 'Bronze', xp: 0 };
+
         // Check 24 hour elapsed time for hints reset
         const now = Date.now();
         const lastHintTime = state.lastHintTimestamp || 0;
@@ -375,6 +412,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (state.streak === 0 && state.xp > 0) state.streak = 1;
     document.querySelector('.streak-badge span:not(.badge-icon)').innerText = `${state.streak} Days`;
+
+    const gemsEl = document.getElementById('nav-gems-balance');
+    if (gemsEl) {
+      gemsEl.innerText = `${(state.gems || 0).toLocaleString()} Gems`;
+    }
   }
 
   function updateProfileViewUI() {
@@ -383,13 +425,120 @@ document.addEventListener('DOMContentLoaded', () => {
     const streakText = state.streak === 1 ? '1 Day' : `${state.streak} Days`;
     
     const nameEl = document.querySelector('#profile-view h2');
-    if (nameEl) nameEl.innerText = username;
+    if (nameEl) {
+      nameEl.innerText = username;
+      // Apply neon glow if unlocked and active
+      if (state.unlockedLeaderboardGlow && state.leaderboardGlowColor && state.leaderboardGlowColor !== 'none') {
+        nameEl.className = `glow-${state.leaderboardGlowColor}`;
+      } else {
+        nameEl.className = '';
+      }
+    }
 
-    const xpValEl = document.querySelector('#profile-view .explanation-step:nth-child(1) div');
+    const xpValEl = document.getElementById('profile-xp-val');
     if (xpValEl) xpValEl.innerText = `👑 ${xpText}`;
 
-    const streakValEl = document.querySelector('#profile-view .explanation-step:nth-child(2) div');
+    const streakValEl = document.getElementById('profile-streak-val');
     if (streakValEl) streakValEl.innerText = `🔥 ${streakText}`;
+
+    const shieldValEl = document.getElementById('profile-shield-val');
+    if (shieldValEl) shieldValEl.innerText = `🛡️ ${state.streakFreezeCount || 0}`;
+
+    const shieldDescEl = document.getElementById('profile-shield-desc');
+    if (shieldDescEl) shieldDescEl.innerText = state.streakFreezeCount > 0 ? 'Streak Freeze Active' : 'Streak Freezes Owned';
+
+    const gemsValEl = document.getElementById('profile-gems-val');
+    if (gemsValEl) gemsValEl.innerText = `💎 ${(state.gems || 0).toLocaleString()}`;
+
+    const avatarDisplayEl = document.getElementById('profile-avatar-display');
+    if (avatarDisplayEl) avatarDisplayEl.innerText = state.selectedAvatar || '👤';
+
+    // 1. Render Avatar Grid
+    const avatarGrid = document.getElementById('profile-avatar-grid');
+    if (avatarGrid) {
+      avatarGrid.innerHTML = '';
+      const avatars = state.unlockedAvatars || ['👤', '🐱'];
+      avatars.forEach(av => {
+        const btn = document.createElement('button');
+        btn.className = `avatar-option-btn ${state.selectedAvatar === av ? 'selected' : ''}`;
+        btn.innerText = av;
+        btn.addEventListener('click', () => {
+          playClickSound();
+          state.selectedAvatar = av;
+          saveState();
+        });
+        avatarGrid.appendChild(btn);
+      });
+    }
+
+    // 2. Render Glow Grid
+    const glowGrid = document.getElementById('profile-glow-grid');
+    if (glowGrid) {
+      glowGrid.innerHTML = '';
+      
+      const glows = [
+        { color: 'none', label: 'None' },
+        { color: 'red', label: 'Red Glow' },
+        { color: 'green', label: 'Green Glow' },
+        { color: 'blue', label: 'Blue Glow' },
+        { color: 'purple', label: 'Purple Glow' },
+        { color: 'gold', label: 'Gold Glow' }
+      ];
+
+      glows.forEach(gl => {
+        const btn = document.createElement('button');
+        btn.className = `glow-option-btn ${state.leaderboardGlowColor === gl.color ? 'selected' : ''}`;
+        btn.style.fontSize = '0.75rem';
+        btn.style.width = 'auto';
+        btn.style.padding = '0.5rem 0.75rem';
+        btn.innerText = gl.label;
+        if (gl.color !== 'none') {
+          btn.classList.add(`glow-${gl.color}`);
+        }
+        
+        // Disable/fade if not unlocked yet
+        if (!state.unlockedLeaderboardGlow && gl.color !== 'none') {
+          btn.style.opacity = '0.35';
+          btn.style.cursor = 'not-allowed';
+          btn.title = 'Unlock in the Shop!';
+        } else {
+          btn.addEventListener('click', () => {
+            playClickSound();
+            state.leaderboardGlowColor = gl.color;
+            saveState();
+          });
+        }
+        glowGrid.appendChild(btn);
+      });
+    }
+
+    // 3. Render Achievements
+    const achList = document.getElementById('profile-achievements-list');
+    if (achList) {
+      achList.innerHTML = '';
+      const achievements = [
+        { id: 'streak_3', name: 'Streak Rookie', desc: 'Maintain a 3-day streak', check: () => state.streak >= 3, icon: '🥉' },
+        { id: 'streak_7', name: 'Streak Master', desc: 'Maintain a 7-day streak', check: () => state.streak >= 7, icon: '🥈' },
+        { id: 'xp_1000', name: 'XP Overlord', desc: 'Earn 1,000 XP', check: () => state.xp >= 1000, icon: '👑' },
+        { id: 'lessons_5', name: 'Lesson Conqueror', desc: 'Complete 5 lessons', check: () => state.completedLessons.length >= 5, icon: '🎓' },
+        { id: 'shop_buy', name: 'Shopaholic', desc: 'Buy an item from the Codex Shop', check: () => (state.unlockedSoundPacks && state.unlockedSoundPacks.length > 4) || (state.unlockedAvatars && state.unlockedAvatars.length > 2) || state.unlockedLeaderboardGlow || state.streakFreezeCount > 0, icon: '🛍️' },
+        { id: 'arena_win', name: 'Gladiator', desc: 'Win an Arena duel', check: () => state.arenaStats && state.arenaStats.wins >= 1, icon: '⚔️' }
+      ];
+
+      achievements.forEach(ach => {
+        const isUnlocked = ach.check();
+        const card = document.createElement('div');
+        card.className = `achievement-badge-card ${isUnlocked ? '' : 'badge-locked'}`;
+        card.innerHTML = `
+          <div style="font-size: 2.2rem;">${ach.icon}</div>
+          <div>
+            <div style="font-weight: 800; color: #fff; font-size: 0.95rem;">${ach.name}</div>
+            <div style="color: var(--duo-text-muted); font-size: 0.75rem;">${ach.desc}</div>
+          </div>
+        `;
+        achList.appendChild(card);
+      });
+    }
   }
 
   function updateLeaderboardUserUI() {
@@ -412,9 +561,14 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.keys(accounts).forEach(uname => {
       const userSaved = localStorage.getItem(`codex_user_${uname}`);
       let userXP = 0;
+      let userAvatar = uname === 'admin' ? '👑' : '👤';
+      let glowColor = 'none';
       if (userSaved) {
         try {
-          userXP = JSON.parse(userSaved).xp || 0;
+          const parsed = JSON.parse(userSaved);
+          userXP = parsed.xp || 0;
+          userAvatar = parsed.selectedAvatar || (uname === 'admin' ? '👑' : '👤');
+          glowColor = parsed.leaderboardGlowColor || 'none';
         } catch (e) {
           console.error(e);
         }
@@ -422,7 +576,8 @@ document.addEventListener('DOMContentLoaded', () => {
       usersList.push({
         username: uname,
         xp: userXP,
-        avatar: uname === 'admin' ? '👑' : '👤',
+        avatar: userAvatar,
+        glowColor: glowColor,
         isUser: (uname === state.currentUser)
       });
     });
@@ -431,16 +586,17 @@ document.addEventListener('DOMContentLoaded', () => {
       usersList.push({
         username: state.currentUser,
         xp: state.xp,
-        avatar: state.isAdmin ? '👑' : '👤',
+        avatar: state.selectedAvatar || (state.isAdmin ? '👑' : '👤'),
+        glowColor: state.leaderboardGlowColor || 'none',
         isUser: true
       });
     }
 
     const bots = [
-      { username: 'Builderman', xp: 2450, avatar: '🥇', isUser: false },
-      { username: 'CodeNinja', xp: 1890, avatar: '🥈', isUser: false },
-      { username: 'Robloxian99', xp: 1200, avatar: '🥉', isUser: false },
-      { username: 'PythonCoder', xp: 950, avatar: '🐱', isUser: false }
+      { username: 'Builderman', xp: 2450, avatar: '🥇', glowColor: 'none', isUser: false },
+      { username: 'CodeNinja', xp: 1890, avatar: '🥈', glowColor: 'none', isUser: false },
+      { username: 'Robloxian99', xp: 1200, avatar: '🥉', glowColor: 'none', isUser: false },
+      { username: 'PythonCoder', xp: 950, avatar: '🐱', glowColor: 'none', isUser: false }
     ];
 
     bots.forEach(bot => {
@@ -455,17 +611,13 @@ document.addEventListener('DOMContentLoaded', () => {
     usersList.forEach((u, index) => {
       const rank = index + 1;
       let rankClass = '';
-      let rankBadge = rank;
       
       if (rank === 1) {
         rankClass = 'rank-1';
-        rankBadge = '🥇';
       } else if (rank === 2) {
         rankClass = 'rank-2';
-        rankBadge = '🥈';
       } else if (rank === 3) {
         rankClass = 'rank-3';
-        rankBadge = '🥉';
       }
 
       if (u.isUser) {
@@ -476,11 +628,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const row = document.createElement('div');
       row.className = `leaderboard-row ${rankClass}`;
+      
+      let nameSpanClass = '';
+      if (u.glowColor && u.glowColor !== 'none') {
+        nameSpanClass = `glow-${u.glowColor}`;
+        row.classList.add(`glow-row-${u.glowColor}`);
+      }
+
       row.innerHTML = `
         <div class="leaderboard-rank-container">
           <span class="leaderboard-rank-num">${rank}</span>
-          <span class="leaderboard-avatar">${u.avatar || rankBadge}</span>
-          <span class="leaderboard-username">${u.username}${u.isUser ? ' (You)' : ''}</span>
+          <span class="leaderboard-avatar">${u.avatar || '👤'}</span>
+          <span class="leaderboard-username ${nameSpanClass}">${u.username}${u.isUser ? ' (You)' : ''}</span>
         </div>
         <span class="leaderboard-xp-val">${xpText}</span>
       `;
@@ -699,6 +858,12 @@ document.addEventListener('DOMContentLoaded', () => {
       tabId = 'menu-leaderboard';
     } else if (viewId === 'quests-view') {
       tabId = 'menu-quests';
+    } else if (viewId === 'shop-view') {
+      tabId = 'menu-shop';
+    } else if (viewId === 'playground-view') {
+      tabId = 'menu-playground';
+    } else if (viewId === 'arena-view') {
+      tabId = 'menu-arena';
     } else if (viewId === 'profile-view') {
       tabId = 'menu-profile';
     } else if (viewId === 'download-view') {
@@ -1071,6 +1236,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const lesson = window.CodexCurriculum[state.currentTrack].chapters[state.currentChapterIdx].lessons[state.currentLessonIdx];
       const draftKey = `${state.currentTrack}_${lesson.id}`;
       state.editorContent[draftKey] = code;
+    }
+    
+    if (lang === 'luau') {
+      updateRobloxSync(code);
     }
   }
 
@@ -1559,15 +1728,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (allPassed && result.success) {
       const isFirstTime = !state.completedLessons.includes(lesson.id);
+      const gemsReward = Math.round(lesson.xp / 5);
       if (isFirstTime) {
         state.completedLessons.push(lesson.id);
         state.xp += lesson.xp;
+        state.gems = (state.gems || 0) + gemsReward;
         saveState();
       }
       
       const successRow = document.createElement('div');
       successRow.className = 'console-log-row success';
-      successRow.innerText = `🎉 Correct! +${lesson.xp} XP earned.`;
+      successRow.innerText = `🎉 Correct! +${lesson.xp} XP and +${gemsReward} Gems earned.`;
       consoleOutput.appendChild(successRow);
 
       spawnConfetti();
@@ -1699,9 +1870,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Award XP
     const isFirstTime = !state.completedLessons.includes(activeQuiz.id);
+    const gemsReward = Math.round(rewardXP / 5);
     if (isFirstTime && rewardXP > 0) {
       state.completedLessons.push(activeQuiz.id);
       state.xp += rewardXP;
+      state.gems = (state.gems || 0) + gemsReward;
       saveState();
     }
 
@@ -1717,7 +1890,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="results-score-label">Correct Answers</div>
         </div>
 
-        <div style="font-weight: 700; color: var(--accent-gold); margin-bottom: 2rem;">+${rewardXP} XP Earned</div>
+        <div style="font-weight: 700; color: var(--accent-gold); margin-bottom: 2rem;">+${rewardXP} XP & +${gemsReward} Gems Earned</div>
 
         <button class="quiz-btn" id="quiz-close-btn">Return to Path</button>
       </div>
@@ -2123,6 +2296,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const clickSelect = document.getElementById('click-sound-select');
     const typeSelect = document.getElementById('type-sound-select');
 
+    function populateSoundSelect(selectEl, currentVal) {
+      if (!selectEl) return;
+      selectEl.innerHTML = `
+        <option value="duo-ping">Duolingo Sweet Ping (Preset)</option>
+        <option value="retro-beep">Retro Square Beep (Preset)</option>
+        <option value="mech-click">Mechanical Thud (Preset)</option>
+        <option value="typewriter">Typewriter Clack (Preset)</option>
+      `;
+      
+      if (state.unlockedSoundPacks && state.unlockedSoundPacks.includes('arcade')) {
+        selectEl.innerHTML += `<option value="arcade">Arcade Blip (Unlocked)</option>`;
+      }
+      if (state.unlockedSoundPacks && state.unlockedSoundPacks.includes('futuristic')) {
+        selectEl.innerHTML += `<option value="futuristic">Sci-Fi Synth (Unlocked)</option>`;
+      }
+      
+      selectEl.innerHTML += `<option value="custom">Custom Uploaded Audio</option>`;
+      selectEl.value = currentVal;
+    }
+
     if (cb) {
       cb.checked = state.soundSettings.soundEnabled;
       cb.addEventListener('change', () => {
@@ -2133,7 +2326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (clickSelect) {
-      clickSelect.value = state.soundSettings.clickPreset;
+      populateSoundSelect(clickSelect, state.soundSettings.clickPreset);
       clickSelect.addEventListener('change', () => {
         state.soundSettings.clickPreset = clickSelect.value;
         saveState();
@@ -2142,7 +2335,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (typeSelect) {
-      typeSelect.value = state.soundSettings.typePreset;
+      populateSoundSelect(typeSelect, state.soundSettings.typePreset);
       typeSelect.addEventListener('change', () => {
         state.soundSettings.typePreset = typeSelect.value;
         saveState();
@@ -2683,10 +2876,981 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --------------------------------------------------------------------------
+  // Roblox Studio Sync Helper
+  // --------------------------------------------------------------------------
+  function updateRobloxSync(code) {
+    if (window.electronAPI && window.electronAPI.updateSyncScript) {
+      window.electronAPI.updateSyncScript(code);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Codex Shop Logic
+  // --------------------------------------------------------------------------
+  function renderShop() {
+    const grid = document.getElementById('shop-items-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const shopItems = [
+      {
+        id: 'streak_freeze',
+        icon: '🛡️',
+        title: 'Streak Freeze',
+        desc: 'Protects your learning streak if you miss a day of coding.',
+        price: 50,
+        buyAction: () => {
+          state.streakFreezeCount = (state.streakFreezeCount || 0) + 1;
+        },
+        checkOwned: () => false
+      },
+      {
+        id: 'sound_arcade',
+        icon: '🕹️',
+        title: 'Arcade Sound Preset',
+        desc: 'Unlock retro arcade blips and laser sounds for clicks and keystrokes.',
+        price: 100,
+        buyAction: () => {
+          if (!state.unlockedSoundPacks.includes('arcade')) {
+            state.unlockedSoundPacks.push('arcade');
+          }
+        },
+        checkOwned: () => state.unlockedSoundPacks.includes('arcade')
+      },
+      {
+        id: 'sound_futuristic',
+        icon: '🚀',
+        title: 'Sci-Fi Sound Preset',
+        desc: 'Unlock futuristic synthesizers and computer hum presets.',
+        price: 100,
+        buyAction: () => {
+          if (!state.unlockedSoundPacks.includes('futuristic')) {
+            state.unlockedSoundPacks.push('futuristic');
+          }
+        },
+        checkOwned: () => state.unlockedSoundPacks.includes('futuristic')
+      },
+      {
+        id: 'avatar_pack',
+        icon: '👾',
+        title: 'Cosmic Avatar Pack',
+        desc: 'Unlock exclusive profile emojis: 🦊, 🦁, 👾, 🚀, 👑.',
+        price: 150,
+        buyAction: () => {
+          ['🦊', '🦁', '👾', '🚀', '👑'].forEach(av => {
+            if (!state.unlockedAvatars.includes(av)) state.unlockedAvatars.push(av);
+          });
+        },
+        checkOwned: () => state.unlockedAvatars.includes('🦊')
+      },
+      {
+        id: 'name_glow',
+        icon: '✨',
+        title: 'Neon Leaderboard Glow',
+        desc: 'Unlock neon colored text glows to highlight your name on the Leaderboard cards.',
+        price: 200,
+        buyAction: () => {
+          state.unlockedLeaderboardGlow = true;
+          state.leaderboardGlowColor = 'blue';
+        },
+        checkOwned: () => state.unlockedLeaderboardGlow
+      }
+    ];
+
+    shopItems.forEach(item => {
+      const isOwned = item.checkOwned();
+      const card = document.createElement('div');
+      card.className = 'shop-card';
+      
+      let buttonHTML = '';
+      if (isOwned) {
+        buttonHTML = `<button class="quiz-btn shop-btn" disabled style="background: var(--duo-border) !important; box-shadow: none !important;">Owned</button>`;
+      } else {
+        buttonHTML = `<button class="quiz-btn shop-btn" style="background: var(--duo-blue) !important; box-shadow: 0 4px 0 var(--duo-blue-shadow) !important;">Buy Item</button>`;
+      }
+
+      card.innerHTML = `
+        <div class="shop-card-icon">${item.icon}</div>
+        <h3 class="shop-card-title">${item.title}</h3>
+        <p class="shop-card-desc">${item.desc}</p>
+        <div class="shop-card-price">Gems ${item.price}</div>
+        <div style="width: 100%; margin-top: auto;">${buttonHTML}</div>
+      `;
+
+      const buyBtn = card.querySelector('.shop-btn');
+      if (buyBtn && !isOwned) {
+        buyBtn.addEventListener('click', () => {
+          playClickSound();
+          if ((state.gems || 0) >= item.price) {
+            state.gems -= item.price;
+            item.buyAction();
+            saveState();
+            renderShop();
+            initSettingsUI();
+            alert(`🎉 Successfully purchased ${item.title}!`);
+          } else {
+            alert("❌ Insufficient Gems! Keep completing lessons to earn more.");
+          }
+        });
+      }
+
+      grid.appendChild(card);
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Project Playground Logic
+  // --------------------------------------------------------------------------
+  let currentPlayground = null;
+
+  function renderPlaygrounds() {
+    const listPane = document.getElementById('playground-list-pane');
+    const editorPane = document.getElementById('playground-editor-pane');
+    if (listPane) listPane.style.display = 'block';
+    if (editorPane) editorPane.style.display = 'none';
+
+    const draftsGrid = document.getElementById('playgrounds-drafts-grid');
+    if (!draftsGrid) return;
+    draftsGrid.innerHTML = '';
+
+    const drafts = state.playgrounds || [];
+    drafts.forEach(draft => {
+      const card = document.createElement('div');
+      card.className = 'draft-card';
+      
+      const langIcon = draft.language === 'luau' ? 'R$' : (draft.language === 'python' ? '🐍' : '🌐');
+      const langColor = draft.language === 'luau' ? 'var(--lang-luau)' : (draft.language === 'python' ? 'var(--accent-green)' : 'var(--accent-blue)');
+
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+          <div style="font-size: 2.2rem; background: rgba(255,255,255,0.05); width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: ${langColor}; font-weight: 800;">${langIcon}</div>
+          <button class="btn-delete-draft" title="Delete Draft">&times;</button>
+        </div>
+        <h3 class="draft-card-title">${draft.name}</h3>
+        <div class="draft-card-meta">
+          <span style="color: var(--duo-text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">${draft.language}</span>
+          <span style="font-size: 0.75rem; color: var(--duo-text-muted);">${draft.code.split('\n').length} lines</span>
+        </div>
+      `;
+
+      card.querySelector('.btn-delete-draft').addEventListener('click', (e) => {
+        e.stopPropagation();
+        playClickSound();
+        if (confirm(`Are you sure you want to delete "${draft.name}"?`)) {
+          state.playgrounds = state.playgrounds.filter(p => p.id !== draft.id);
+          saveState();
+          renderPlaygrounds();
+        }
+      });
+
+      card.addEventListener('click', () => {
+        playClickSound();
+        loadPlaygroundEditor(draft);
+      });
+
+      draftsGrid.appendChild(card);
+    });
+  }
+
+  function loadPlaygroundEditor(draft) {
+    currentPlayground = draft;
+    
+    document.getElementById('playground-list-pane').style.display = 'none';
+    document.getElementById('playground-editor-pane').style.display = 'flex';
+
+    document.getElementById('playground-title-display').innerText = draft.name;
+    document.getElementById('playground-lang-tag').innerText = draft.language.toUpperCase();
+
+    const codeInput = document.getElementById('playground-code-input');
+    codeInput.value = draft.code;
+
+    // Toggle preview tab based on language
+    const previewTab = document.getElementById('btn-playground-tab-preview');
+    if (draft.language === 'web') {
+      if (previewTab) previewTab.style.display = 'block';
+    } else {
+      if (previewTab) previewTab.style.display = 'none';
+    }
+
+    syncPlaygroundEditor(draft.code, draft.language);
+  }
+
+  function syncPlaygroundEditor(code, lang) {
+    const highlight = document.getElementById('playground-code-highlight');
+    const lineNumbers = document.getElementById('playground-line-numbers');
+    
+    if (highlight) {
+      highlight.innerHTML = highlightCode(code, lang) + "\n";
+    }
+
+    if (lineNumbers) {
+      const lineCount = code.split('\n').length;
+      let lineNumbersHTML = '';
+      for (let i = 1; i <= lineCount; i++) {
+        lineNumbersHTML += `<div>${i}</div>`;
+      }
+      lineNumbers.innerHTML = lineNumbersHTML;
+    }
+  }
+
+  // Bind key up events to custom playground editor
+  const pgInput = document.getElementById('playground-code-input');
+  if (pgInput) {
+    pgInput.addEventListener('input', () => {
+      if (currentPlayground) {
+        currentPlayground.code = pgInput.value;
+        syncPlaygroundEditor(pgInput.value, currentPlayground.language);
+      }
+    });
+
+    pgInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = pgInput.selectionStart;
+        const end = pgInput.selectionEnd;
+        pgInput.value = pgInput.value.substring(0, start) + "  " + pgInput.value.substring(end);
+        pgInput.selectionStart = pgInput.selectionEnd = start + 2;
+        if (currentPlayground) {
+          currentPlayground.code = pgInput.value;
+          syncPlaygroundEditor(pgInput.value, currentPlayground.language);
+        }
+      }
+    });
+  }
+
+  // Create new project trigger
+  const createPlaygroundBtn = document.getElementById('btn-create-playground');
+  if (createPlaygroundBtn) {
+    createPlaygroundBtn.addEventListener('click', () => {
+      playClickSound();
+      const pName = prompt("Enter project name:", "My New Project") || "My Project";
+      const pLang = prompt("Enter language (luau, python, web):", "luau") || "luau";
+      
+      const cleanLang = pLang.toLowerCase().trim();
+      if (cleanLang !== 'luau' && cleanLang !== 'python' && cleanLang !== 'web') {
+        alert("Invalid language choice! Please select luau, python, or web.");
+        return;
+      }
+
+      let starter = '-- Start scripting here\n';
+      if (cleanLang === 'python') {
+        starter = '# Start python coding here\n';
+      } else if (cleanLang === 'web') {
+        starter = '<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { background: #121212; color: #fff; font-family: sans-serif; text-align: center; padding-top: 50px; }\n  </style>\n</head>\n<body>\n  <h1>Codex Web Sandbox 🚀</h1>\n  <p>Modify this HTML and click Run!</p>\n</body>\n</html>';
+      }
+
+      const newProj = {
+        id: 'pg_' + Date.now(),
+        name: pName,
+        language: cleanLang,
+        code: starter
+      };
+
+      if (!state.playgrounds) state.playgrounds = [];
+      state.playgrounds.push(newProj);
+      saveState();
+      loadPlaygroundEditor(newProj);
+    });
+  }
+
+  // Back button for playground
+  const pgBackBtn = document.getElementById('btn-playground-back');
+  if (pgBackBtn) {
+    pgBackBtn.addEventListener('click', () => {
+      playClickSound();
+      currentPlayground = null;
+      renderPlaygrounds();
+    });
+  }
+
+  // Save button for playground
+  const pgSaveBtn = document.getElementById('btn-playground-save');
+  if (pgSaveBtn) {
+    pgSaveBtn.addEventListener('click', () => {
+      playClickSound();
+      if (currentPlayground) {
+        currentPlayground.code = document.getElementById('playground-code-input').value;
+        saveState();
+        alert("💾 Draft saved successfully!");
+      }
+    });
+  }
+
+  // Share button for playground
+  const pgShareBtn = document.getElementById('btn-playground-share');
+  if (pgShareBtn) {
+    pgShareBtn.addEventListener('click', () => {
+      playClickSound();
+      if (currentPlayground) {
+        currentPlayground.code = document.getElementById('playground-code-input').value;
+        saveState();
+
+        const payload = {
+          name: currentPlayground.name,
+          language: currentPlayground.language,
+          code: currentPlayground.code
+        };
+
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+        const shareUrl = `${window.location.origin}${window.location.pathname}?playground=${encoded}`;
+        
+        const box = document.getElementById('playground-share-url-box');
+        if (box) box.value = shareUrl;
+
+        const modal = document.getElementById('playground-share-modal');
+        if (modal) modal.style.display = 'flex';
+      }
+    });
+  }
+
+  // Copy share URL button
+  const copyShareBtn = document.getElementById('btn-copy-share-url');
+  if (copyShareBtn) {
+    copyShareBtn.addEventListener('click', () => {
+      playClickSound();
+      const box = document.getElementById('playground-share-url-box');
+      if (box) {
+        box.select();
+        document.execCommand('copy');
+        alert("📋 Share URL copied to clipboard!");
+      }
+    });
+  }
+
+  // Close share modal
+  const closeShareBtn = document.getElementById('btn-close-share-modal');
+  if (closeShareBtn) {
+    closeShareBtn.addEventListener('click', () => {
+      playClickSound();
+      const modal = document.getElementById('playground-share-modal');
+      if (modal) modal.style.display = 'none';
+    });
+  }
+
+  // Tab switching in playground
+  const tabConsoleBtn = document.getElementById('btn-playground-tab-console');
+  const tabPreviewBtn = document.getElementById('btn-playground-tab-preview');
+  const pgConsolePane = document.getElementById('playground-console-pane');
+  const pgPreviewPane = document.getElementById('playground-preview-pane');
+
+  if (tabConsoleBtn) {
+    tabConsoleBtn.addEventListener('click', () => {
+      playClickSound();
+      tabConsoleBtn.classList.add('active');
+      if (tabPreviewBtn) tabPreviewBtn.classList.remove('active');
+      if (pgConsolePane) pgConsolePane.style.display = 'block';
+      if (pgPreviewPane) pgPreviewPane.style.display = 'none';
+    });
+  }
+
+  if (tabPreviewBtn) {
+    tabPreviewBtn.addEventListener('click', () => {
+      playClickSound();
+      tabPreviewBtn.classList.add('active');
+      if (tabConsoleBtn) tabConsoleBtn.classList.remove('active');
+      if (pgPreviewPane) pgPreviewPane.style.display = 'block';
+      if (pgConsolePane) pgConsolePane.style.display = 'none';
+    });
+  }
+
+  // Run button in playground
+  const pgRunBtn = document.getElementById('btn-playground-run');
+  if (pgRunBtn) {
+    pgRunBtn.addEventListener('click', () => {
+      playClickSound();
+      if (!currentPlayground) return;
+
+      const codeVal = document.getElementById('playground-code-input').value;
+      const consolePane = document.getElementById('playground-console-pane');
+      if (consolePane) {
+        consolePane.innerHTML = '<div class="console-log-row info">> Compiling & running code...</div>';
+      }
+
+      if (currentPlayground.language === 'web') {
+        const previewFrame = document.getElementById('playground-web-preview');
+        if (previewFrame) {
+          previewFrame.srcdoc = codeVal;
+          if (tabPreviewBtn) tabPreviewBtn.click();
+        }
+        if (consolePane) {
+          const row = document.createElement('div');
+          row.className = 'console-log-row success';
+          row.innerText = '✅ Live preview updated successfully.';
+          consolePane.appendChild(row);
+        }
+      } else {
+        const interpreter = window.CodexInterpreter;
+        if (interpreter) {
+          const result = interpreter.run(codeVal, currentPlayground.language);
+          if (consolePane) {
+            result.logs.forEach(log => {
+              const row = document.createElement('div');
+              row.className = `console-log-row ${log.type === 'error' ? 'error' : 'info'}`;
+              row.innerText = `> ${log.text}`;
+              consolePane.appendChild(row);
+            });
+            
+            const outcome = document.createElement('div');
+            outcome.className = `console-log-row ${result.success ? 'success' : 'error'}`;
+            outcome.innerText = result.success ? '✅ Script finished execution successfully.' : '❌ Script failed due to errors.';
+            consolePane.appendChild(outcome);
+          }
+        }
+      }
+    });
+  }
+
+  // URL Param checking for published playground pre-load
+  function checkSharedPlaygroundLink() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedData = urlParams.get('playground');
+    if (sharedData) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
+        const sharedProj = {
+          id: 'shared_' + Date.now(),
+          name: decoded.name || 'Shared Project',
+          language: decoded.language || 'luau',
+          code: decoded.code || ''
+        };
+        showView('playground-view');
+        loadPlaygroundEditor(sharedProj);
+      } catch (e) {
+        console.error("Failed to decode shared playground URL", e);
+      }
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Codex Arena Logic (Multiplayer Code Challenges)
+  // --------------------------------------------------------------------------
+  let arenaTimerInterval = null;
+  let arenaMatchmakingTimeout = null;
+  let arenaOpponentProgressInterval = null;
+  let activeArenaChallenge = null;
+  let arenaTimeElapsed = 0;
+  let arenaOpponentProgress = 0;
+  let arenaUserProgress = 0;
+
+  const arenaChallenges = [
+    {
+      title: "Print Numbers",
+      desc: "Write a for loop that prints numbers from 1 to 5 to the console.",
+      starterCode: "-- Write a loop to print 1, 2, 3, 4, 5\n",
+      checkpointsCount: 2,
+      check: (code, stdout) => {
+        let count = 0;
+        const prints = stdout.map(l => parseInt(l.text.trim(), 10)).filter(n => !isNaN(n));
+        const hasLoop = /for|while/.test(code);
+        const matchesSeq = prints.slice(0, 5).join(',') === '1,2,3,4,5';
+        if (hasLoop) count++;
+        if (matchesSeq) count++;
+        return count;
+      }
+    },
+    {
+      title: "Double Number Value",
+      desc: "Create a function named double(num) that returns the double of the input.",
+      starterCode: "function double(num)\n  -- Return num multiplied by 2\nend\n",
+      checkpointsCount: 2,
+      check: (code, stdout) => {
+        let count = 0;
+        const definesDouble = /function\s+double\s*\(/.test(code);
+        const doublesVal = code.includes('*') && (code.includes('2') || code.includes('num + num'));
+        if (definesDouble) count++;
+        if (doublesVal) count++;
+        return count;
+      }
+    },
+    {
+      title: "Confirm Is Even",
+      desc: "Create a function named isEven(num) that returns true if num is even and false otherwise.",
+      starterCode: "function isEven(num)\n  -- Type answer here\nend\n",
+      checkpointsCount: 2,
+      check: (code, stdout) => {
+        let count = 0;
+        const definesEven = /function\s+isEven\s*\(/.test(code);
+        const doesMod = code.includes('%') || code.includes('math.mod') || code.includes('math.fmod');
+        if (definesEven) count++;
+        if (doesMod) count++;
+        return count;
+      }
+    }
+  ];
+
+  function renderArena() {
+    const lobby = document.getElementById('arena-lobby-pane');
+    const queue = document.getElementById('arena-queue-pane');
+    const battle = document.getElementById('arena-battle-pane');
+    const results = document.getElementById('arena-results-pane');
+
+    if (lobby) lobby.style.display = 'block';
+    if (queue) queue.style.display = 'none';
+    if (battle) battle.style.display = 'none';
+    if (results) results.style.display = 'none';
+
+    const stats = state.arenaStats || { wins: 0, losses: 0, rank: 'Bronze', xp: 0 };
+    
+    const rankBadgeEl = document.getElementById('arena-rank-badge');
+    const rankLblEl = document.getElementById('arena-rank-lbl');
+    const rankXpEl = document.getElementById('arena-rank-xp-lbl');
+    const winsEl = document.getElementById('arena-wins-lbl');
+    const lossesEl = document.getElementById('arena-losses-lbl');
+    
+    const uAvatar = document.getElementById('arena-user-avatar');
+    const uName = document.getElementById('arena-user-name');
+    const uXpVal = document.getElementById('arena-user-xp-val');
+
+    if (rankBadgeEl) {
+      const badge = stats.rank === 'Bronze' ? '🥉' : (stats.rank === 'Silver' ? '🥈' : (stats.rank === 'Gold' ? '🥇' : '👑'));
+      rankBadgeEl.innerText = badge;
+    }
+    if (rankLblEl) rankLblEl.innerText = `${stats.rank} Rank`;
+    if (rankXpEl) rankXpEl.innerText = `${stats.xp || 0} Arena XP`;
+    if (winsEl) winsEl.innerText = `${stats.wins || 0} Wins`;
+    if (lossesEl) lossesEl.innerText = `${stats.losses || 0} Losses`;
+
+    if (uAvatar) uAvatar.innerText = state.selectedAvatar || '👤';
+    if (uName) uName.innerText = state.currentUser || 'You';
+    if (uXpVal) uXpVal.innerText = `${stats.xp || 0} Arena XP`;
+
+    clearInterval(arenaTimerInterval);
+    clearInterval(arenaOpponentProgressInterval);
+    clearTimeout(arenaMatchmakingTimeout);
+  }
+
+  const joinQueueBtn = document.getElementById('btn-arena-join-queue');
+  if (joinQueueBtn) {
+    joinQueueBtn.addEventListener('click', () => {
+      playClickSound();
+      document.getElementById('arena-lobby-pane').style.display = 'none';
+      document.getElementById('arena-queue-pane').style.display = 'flex';
+      document.getElementById('arena-queue-status').innerText = "Searching for Opponent... 🔍";
+      
+      const opponents = ['Builderman', 'CodeNinja99', 'LuaGladiator', 'ScriptWizard', 'RobloxianCoder'];
+      const opponentName = opponents[Math.floor(Math.random() * opponents.length)];
+
+      arenaMatchmakingTimeout = setTimeout(() => {
+        document.getElementById('arena-queue-status').innerText = `Opponent Found: ${opponentName}! 🎯`;
+        playCompleteSound();
+
+        setTimeout(() => {
+          startArenaDuel(opponentName);
+        }, 1500);
+
+      }, 3000);
+    });
+  }
+
+  const leaveQueueBtn = document.getElementById('btn-arena-leave-queue');
+  if (leaveQueueBtn) {
+    leaveQueueBtn.addEventListener('click', () => {
+      playClickSound();
+      renderArena();
+    });
+  }
+
+  function startArenaDuel(opponentName) {
+    document.getElementById('arena-queue-pane').style.display = 'none';
+    document.getElementById('arena-battle-pane').style.display = 'flex';
+
+    activeArenaChallenge = arenaChallenges[Math.floor(Math.random() * arenaChallenges.length)];
+    
+    document.getElementById('arena-challenge-title').innerText = activeArenaChallenge.title;
+    document.getElementById('arena-challenge-desc').innerText = activeArenaChallenge.desc;
+    document.getElementById('arena-battle-opp-name').innerText = opponentName;
+    document.getElementById('arena-battle-user-name').innerText = state.currentUser || 'You';
+    document.getElementById('arena-battle-user-avatar').innerText = state.selectedAvatar || '👤';
+
+    const arenaCodeInput = document.getElementById('arena-code-input');
+    arenaCodeInput.value = activeArenaChallenge.starterCode;
+    syncArenaEditor(activeArenaChallenge.starterCode);
+
+    arenaTimeElapsed = 0;
+    arenaOpponentProgress = 0;
+    arenaUserProgress = 0;
+
+    document.getElementById('arena-battle-timer').innerText = "00:00";
+    document.getElementById('arena-battle-user-progress').innerText = `Progress: 0 / ${activeArenaChallenge.checkpointsCount} Checkpoints`;
+    document.getElementById('arena-battle-opp-progress').innerText = `Progress: 0 / ${activeArenaChallenge.checkpointsCount} Checkpoints`;
+    
+    document.getElementById('arena-console-pane').innerHTML = '<div class="console-log-row info">> Battle started! Solve the checkpoints quickly.</div>';
+
+    const cpList = document.getElementById('arena-checkpoints-list');
+    cpList.innerHTML = '';
+    for (let i = 1; i <= activeArenaChallenge.checkpointsCount; i++) {
+      const row = document.createElement('div');
+      row.className = 'checkpoint-item';
+      row.id = `arena-cp-${i}`;
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '0.5rem';
+      row.style.fontSize = '0.8rem';
+      row.style.color = 'var(--duo-text-muted)';
+      row.innerHTML = `<span class="checkpoint-bullet" style="color: var(--duo-border);">⚪</span> Checkpoint ${i}`;
+      cpList.appendChild(row);
+    }
+
+    arenaTimerInterval = setInterval(() => {
+      arenaTimeElapsed++;
+      const mins = Math.floor(arenaTimeElapsed / 60).toString().padStart(2, '0');
+      const secs = (arenaTimeElapsed % 60).toString().padStart(2, '0');
+      document.getElementById('arena-battle-timer').innerText = `${mins}:${secs}`;
+    }, 1000);
+
+    arenaOpponentProgressInterval = setInterval(() => {
+      if (Math.random() < 0.22) {
+        arenaOpponentProgress++;
+        document.getElementById('arena-battle-opp-progress').innerText = `Progress: ${arenaOpponentProgress} / ${activeArenaChallenge.checkpointsCount} Checkpoints`;
+        
+        const cRow = document.createElement('div');
+        cRow.className = 'console-log-row error';
+        cRow.innerText = `⚠️ Opponent completed checkpoint ${arenaOpponentProgress}!`;
+        document.getElementById('arena-console-pane').appendChild(cRow);
+
+        if (arenaOpponentProgress >= activeArenaChallenge.checkpointsCount) {
+          endArenaDuel(false, opponentName);
+        }
+      }
+    }, 3000);
+  }
+
+  function syncArenaEditor(code) {
+    const highlight = document.getElementById('arena-code-highlight');
+    const lineNumbers = document.getElementById('arena-line-numbers');
+    if (highlight) highlight.innerHTML = highlightCode(code, 'luau') + "\n";
+    
+    if (lineNumbers) {
+      const lineCount = code.split('\n').length;
+      let lineNumbersHTML = '';
+      for (let i = 1; i <= lineCount; i++) {
+        lineNumbersHTML += `<div>${i}</div>`;
+      }
+      lineNumbers.innerHTML = lineNumbersHTML;
+    }
+  }
+
+  const arenaEditorInput = document.getElementById('arena-code-input');
+  if (arenaEditorInput) {
+    arenaEditorInput.addEventListener('input', () => {
+      syncArenaEditor(arenaEditorInput.value);
+    });
+
+    arenaEditorInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = arenaEditorInput.selectionStart;
+        const end = arenaEditorInput.selectionEnd;
+        arenaEditorInput.value = arenaEditorInput.value.substring(0, start) + "  " + arenaEditorInput.value.substring(end);
+        arenaEditorInput.selectionStart = arenaEditorInput.selectionEnd = start + 2;
+        syncArenaEditor(arenaEditorInput.value);
+      }
+    });
+  }
+
+  const arenaRunBtn = document.getElementById('btn-arena-run');
+  if (arenaRunBtn) {
+    arenaRunBtn.addEventListener('click', () => {
+      playClickSound();
+      if (!activeArenaChallenge) return;
+
+      const codeVal = document.getElementById('arena-code-input').value;
+      const consolePane = document.getElementById('arena-console-pane');
+      consolePane.innerHTML = '<div class="console-log-row info">> Testing script checkpoints...</div>';
+
+      const interpreter = window.CodexInterpreter;
+      if (interpreter) {
+        const result = interpreter.run(codeVal, 'luau');
+        
+        result.logs.forEach(log => {
+          const row = document.createElement('div');
+          row.className = `console-log-row ${log.type === 'error' ? 'error' : 'info'}`;
+          row.innerText = `> ${log.text}`;
+          consolePane.appendChild(row);
+        });
+
+        const passedCount = activeArenaChallenge.check(codeVal, result.logs);
+        arenaUserProgress = passedCount;
+
+        for (let i = 1; i <= activeArenaChallenge.checkpointsCount; i++) {
+          const row = document.getElementById(`arena-cp-${i}`);
+          if (row) {
+            if (i <= passedCount) {
+              row.innerHTML = `<span class="checkpoint-bullet" style="color: var(--duo-green);">✅</span> Checkpoint ${i} (Passed)`;
+              row.style.color = 'var(--text-primary)';
+            } else {
+              row.innerHTML = `<span class="checkpoint-bullet" style="color: var(--duo-border);">⚪</span> Checkpoint ${i}`;
+              row.style.color = 'var(--duo-text-muted)';
+            }
+          }
+        }
+
+        document.getElementById('arena-battle-user-progress').innerText = `Progress: ${arenaUserProgress} / ${activeArenaChallenge.checkpointsCount} Checkpoints`;
+
+        if (arenaUserProgress >= activeArenaChallenge.checkpointsCount) {
+          endArenaDuel(true);
+        } else {
+          const row = document.createElement('div');
+          row.className = 'console-log-row error';
+          row.innerText = `❌ Only passed ${passedCount}/${activeArenaChallenge.checkpointsCount} checkpoints. Try again!`;
+          consolePane.appendChild(row);
+        }
+      }
+    });
+  }
+
+  function endArenaDuel(isWin, oppName) {
+    clearInterval(arenaTimerInterval);
+    clearInterval(arenaOpponentProgressInterval);
+
+    document.getElementById('arena-battle-pane').style.display = 'none';
+    document.getElementById('arena-results-pane').style.display = 'flex';
+
+    const icon = document.getElementById('arena-results-icon');
+    const title = document.getElementById('arena-results-title');
+    const desc = document.getElementById('arena-results-desc');
+    const payout = document.getElementById('arena-results-payout');
+
+    if (!state.arenaStats) {
+      state.arenaStats = { wins: 0, losses: 0, rank: 'Bronze', xp: 0 };
+    }
+
+    if (isWin) {
+      playCompleteSound();
+      spawnConfetti();
+
+      state.arenaStats.wins++;
+      state.arenaStats.xp += 50;
+      state.gems = (state.gems || 0) + 15;
+
+      icon.innerText = '👑';
+      title.innerText = 'VICTORY!';
+      desc.innerText = `You solved the challenge in ${arenaTimeElapsed} seconds and beat your opponent!`;
+      payout.innerText = `+50 Arena XP & +15 Gems Earned`;
+    } else {
+      icon.innerText = '💀';
+      title.innerText = 'DEFEAT!';
+      desc.innerText = `${oppName} completed all checkpoints first. Best of luck next time!`;
+      payout.innerText = `+10 Arena XP & +2 Gems Earned`;
+
+      state.arenaStats.losses++;
+      state.arenaStats.xp += 10;
+      state.gems = (state.gems || 0) + 2;
+    }
+
+    const axp = state.arenaStats.xp;
+    if (axp >= 300) {
+      state.arenaStats.rank = 'Gold';
+    } else if (axp >= 100) {
+      state.arenaStats.rank = 'Silver';
+    } else {
+      state.arenaStats.rank = 'Bronze';
+    }
+
+    saveState();
+  }
+
+  const resultsBackBtn = document.getElementById('btn-arena-results-back');
+  if (resultsBackBtn) {
+    resultsBackBtn.addEventListener('click', () => {
+      playClickSound();
+      renderArena();
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Codex AI Code Tutor Logic
+  // --------------------------------------------------------------------------
+  const btnInstructions = document.getElementById('btn-lesson-instructions');
+  const btnTutor = document.getElementById('btn-lesson-tutor');
+  const paneInstructions = document.getElementById('instructions-scroll-pane');
+  const paneTutor = document.getElementById('tutor-scroll-pane');
+
+  if (btnInstructions && paneInstructions) {
+    btnInstructions.addEventListener('click', () => {
+      playClickSound();
+      btnInstructions.classList.add('active');
+      btnInstructions.style.borderBottom = '3px solid var(--duo-blue)';
+      btnInstructions.style.color = 'var(--text-primary)';
+      
+      if (btnTutor) {
+        btnTutor.classList.remove('active');
+        btnTutor.style.borderBottom = '3px solid transparent';
+        btnTutor.style.color = 'var(--duo-text-muted)';
+      }
+      
+      paneInstructions.style.display = 'flex';
+      if (paneTutor) paneTutor.style.display = 'none';
+    });
+  }
+
+  if (btnTutor && paneTutor) {
+    btnTutor.addEventListener('click', () => {
+      playClickSound();
+      btnTutor.classList.add('active');
+      btnTutor.style.borderBottom = '3px solid var(--duo-blue)';
+      btnTutor.style.color = 'var(--text-primary)';
+      
+      if (btnInstructions) {
+        btnInstructions.classList.remove('active');
+        btnInstructions.style.borderBottom = '3px solid transparent';
+        btnInstructions.style.color = 'var(--duo-text-muted)';
+      }
+      
+      paneTutor.style.display = 'flex';
+      if (paneInstructions) paneInstructions.style.display = 'none';
+    });
+  }
+
+  const tutorSuggests = document.querySelectorAll('.tutor-suggest-btn');
+  tutorSuggests.forEach(btn => {
+    btn.addEventListener('click', () => {
+      playClickSound();
+      const action = btn.getAttribute('data-action');
+      handleTutorAction(action);
+    });
+  });
+
+  const tutorSendBtn = document.getElementById('tutor-chat-send');
+  if (tutorSendBtn) {
+    tutorSendBtn.addEventListener('click', () => {
+      playClickSound();
+      const input = document.getElementById('tutor-chat-input');
+      const val = input.value.trim();
+      if (val === '') return;
+
+      appendTutorMessage(val, true);
+      input.value = '';
+
+      setTimeout(() => {
+        respondToTutorChat(val);
+      }, 750);
+    });
+  }
+
+  const tutorInput = document.getElementById('tutor-chat-input');
+  if (tutorInput) {
+    tutorInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        tutorSendBtn.click();
+      }
+    });
+  }
+
+  function appendTutorMessage(text, isUser) {
+    const msgContainer = document.getElementById('tutor-messages');
+    if (!msgContainer) return;
+
+    const msg = document.createElement('div');
+    msg.className = `tutor-msg ${isUser ? 'user' : 'bot'}`;
+    msg.style.display = 'flex';
+    msg.style.gap = '0.5rem';
+    msg.style.alignItems = 'flex-start';
+    if (isUser) {
+      msg.style.alignSelf = 'flex-end';
+      msg.style.flexDirection = 'row-reverse';
+    }
+
+    const bubbleStyle = isUser
+      ? 'background: var(--duo-blue); border: 2px solid rgba(28, 176, 246, 0.4); padding: 0.75rem 1rem; border-radius: 16px; border-top-right-radius: 4px; font-size: 0.9rem; line-height: 1.4; color: var(--text-primary);'
+      : 'background: var(--duo-card-bg); border: 2px solid var(--duo-border); padding: 0.75rem 1rem; border-radius: 16px; border-top-left-radius: 4px; font-size: 0.9rem; line-height: 1.4; color: var(--text-primary);';
+
+    msg.innerHTML = `
+      <span class="tutor-avatar" style="font-size: 1.5rem;">${isUser ? (state.selectedAvatar || '👤') : '🤖'}</span>
+      <div class="tutor-bubble" style="${bubbleStyle}">
+        ${text}
+      </div>
+    `;
+
+    msgContainer.appendChild(msg);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+  }
+
+  function handleTutorAction(action) {
+    if (!state.currentTrack) return;
+    const lesson = window.CodexCurriculum[state.currentTrack].chapters[state.currentChapterIdx].lessons[state.currentLessonIdx];
+
+    if (action === 'explain') {
+      appendTutorMessage("Explain this lesson to me, please!", true);
+      setTimeout(() => {
+        const expl = `Sure! In this lesson (<strong>${lesson.name}</strong>), we are working on: ${lesson.instructions}. Remember to pay close attention to the syntax and make sure variables or function scopes match the instructions exactly!`;
+        appendTutorMessage(expl, false);
+      }, 600);
+    } else if (action === 'check') {
+      appendTutorMessage("Can you check my code for bugs?", true);
+      setTimeout(() => {
+        const code = document.getElementById('code-input').value;
+        if (!code.trim() || code.trim() === '-- Type your code below this line') {
+          appendTutorMessage("Your editor looks empty! Try writing some solution code first before running validation checks.", false);
+          return;
+        }
+
+        const hasPrintCall = /print\s*\(/.test(code);
+        if (state.currentTrack === 'luau' && lesson.id === 'luau-print' && !hasPrintCall) {
+          appendTutorMessage("Check line 1: I don't see a call to the <code>print()</code> function. Make sure you wrap the function name and open parentheses correctly, e.g. <code>print(...)</code>", false);
+        } else {
+          appendTutorMessage("Your syntax structures look solid! Let's click the green <strong>Run Code</strong> button on the top right to verify all checkpoints against compiler assertions.", false);
+        }
+      }, 700);
+    } else if (action === 'hint') {
+      appendTutorMessage("I need a hint!", true);
+      setTimeout(() => {
+        let hint = "Make sure you read the instructions carefully. Check quotes casing or verify if local variables are declared using the local keyword.";
+        if (lesson.solution) {
+          hint = `Hint: Try structuring your solution like: <code>${lesson.solution.substring(0, Math.floor(lesson.solution.length / 2))}...</code>`;
+        }
+        appendTutorMessage(hint, false);
+      }, 600);
+    }
+  }
+
+  function respondToTutorChat(query) {
+    const text = query.toLowerCase();
+    let reply = "I'm here to support your coding! Try clicking the suggestions below to get an explanation or a code check.";
+
+    if (text.includes("hello") || text.includes("hi") || text.includes("hey")) {
+      reply = "Hello! I am Byte, your friendly Codex guide. Stuck on something or need help with logic checks? Ask away!";
+    } else if (text.includes("help") || text.includes("stuck") || text.includes("hint")) {
+      if (state.currentTrack) {
+        const lesson = window.CodexCurriculum[state.currentTrack].chapters[state.currentChapterIdx].lessons[state.currentLessonIdx];
+        reply = `Stuck on this lesson? Here is a clue: Double check if your code matches: <code>${lesson.solution || 'instructions solution'}</code>.`;
+      }
+    } else if (text.includes("variable") || text.includes("local")) {
+      reply = "In Luau, local variables are defined using: <code>local myVar = value</code>. Semicolons are optional!";
+    } else if (text.includes("error") || text.includes("bug") || text.includes("broken")) {
+      reply = "If you have a compilation error, verify matching quotes, balanced parentheses, and correct spelling of functions.";
+    }
+
+    appendTutorMessage(reply, false);
+  }
+
+  // --------------------------------------------------------------------------
+  // Menu tab click attachments
+  // --------------------------------------------------------------------------
+  document.getElementById('menu-shop').addEventListener('click', () => {
+    playClickSound();
+    renderShop();
+    showView('shop-view');
+  });
+
+  document.getElementById('menu-playground').addEventListener('click', () => {
+    playClickSound();
+    renderPlaygrounds();
+    showView('playground-view');
+  });
+
+  document.getElementById('menu-arena').addEventListener('click', () => {
+    playClickSound();
+    renderArena();
+    showView('arena-view');
+  });
+
   // Initialization
   loadState();
   renderDashboard();
   initSettingsUI();
+  checkSharedPlaygroundLink();
   if (state.currentUser) {
     showView('dashboard-view');
   } else {

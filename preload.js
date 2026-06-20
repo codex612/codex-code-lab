@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onUpdateProgress: (callback) => ipcRenderer.on('update-progress', (event, value) => callback(value)),
   onUpdateError: (callback) => ipcRenderer.on('update-error', (event, message) => callback(message)),
   onUpdateComplete: (callback) => ipcRenderer.on('update-complete', () => callback()),
-  openExternal: (url) => ipcRenderer.send('open-external', url)
+  openExternal: (url) => ipcRenderer.send('open-external', url),
+  updateSyncScript: (code) => ipcRenderer.send('update-sync-code', code)
 });

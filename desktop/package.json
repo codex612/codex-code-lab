@@ -1,6 +1,6 @@
 {
   "name": "codex-desktop-app",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Codex Desktop: Interactive Code Lab Client",
   "author": "Ollie Irwin",
   "main": "main.js",
