@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startUpdate: (url, filename) => ipcRenderer.send('start-update', { url, filename }),
   onUpdateProgress: (callback) => ipcRenderer.on('update-progress', (event, value) => callback(value)),
   onUpdateError: (callback) => ipcRenderer.on('update-error', (event, message) => callback(message)),
-  onUpdateComplete: (callback) => ipcRenderer.on('update-complete', () => callback())
+  onUpdateComplete: (callback) => ipcRenderer.on('update-complete', () => callback()),
+  openExternal: (url) => ipcRenderer.send('open-external', url)
 });

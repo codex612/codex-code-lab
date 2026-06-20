@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const https = require('https');
 const fs = require('fs');
@@ -121,4 +121,9 @@ ipcMain.on('start-update', (event, { url, filename }) => {
       event.sender.send('update-error', err.message);
     }
   );
+});
+
+// IPC Handler to Open URL in External Browser
+ipcMain.on('open-external', (event, url) => {
+  shell.openExternal(url);
 });

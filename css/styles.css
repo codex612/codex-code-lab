@@ -2274,4 +2274,31 @@ body.auth-mode .main-content-wrapper {
   box-shadow: 0 0px 0 var(--duo-green-shadow) !important;
 }
 
+/* Mobile responsive adjustments for learning view and sandbox */
+@media (max-width: 900px) {
+  #learning-view {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .learning-split-container {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+  .info-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    border-right: none !important;
+    border-bottom: 2px solid var(--duo-border) !important;
+  }
+  .editor-panel {
+    width: 100% !important;
+    height: 650px !important;
+  }
+  .output-panel {
+    height: 250px !important;
+  }
+}
+
+
 
