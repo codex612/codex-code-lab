@@ -285,9 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
         buyMeACoffee: 'https://www.buymeacoffee.com/irwinevie'
       },
       hostedAppLinks: {
-        mac: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10-arm64.dmg',
-        win: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex.Setup.1.0.10.exe',
-        linux: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10.AppImage'
+        mac: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.11/Codex-1.0.11-arm64.dmg',
+        win: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.11/Codex.Setup.1.0.11.exe',
+        linux: 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.11/Codex-1.0.11.AppImage'
       }
     };
     if (globalConfigSaved) {
@@ -304,22 +304,25 @@ document.addEventListener('DOMContentLoaded', () => {
             parsed.donationLinks.buyMeACoffee = 'https://www.buymeacoffee.com/irwinevie';
           }
         }
-        // Auto-heal legacy default links to v1.0.10 in localStorage
+        // Auto-heal legacy default links to v1.0.11 in localStorage
         if (parsed.hostedAppLinks) {
           if (parsed.hostedAppLinks.mac === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.7/Codex-1.0.7-arm64.dmg' ||
               parsed.hostedAppLinks.mac === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.8/Codex-1.0.8-arm64.dmg' ||
-              parsed.hostedAppLinks.mac === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9-arm64.dmg') {
-            parsed.hostedAppLinks.mac = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10-arm64.dmg';
+              parsed.hostedAppLinks.mac === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9-arm64.dmg' ||
+              parsed.hostedAppLinks.mac === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10-arm64.dmg') {
+            parsed.hostedAppLinks.mac = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.11/Codex-1.0.11-arm64.dmg';
           }
           if (parsed.hostedAppLinks.win === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.7/Codex.Setup.1.0.7.exe' ||
               parsed.hostedAppLinks.win === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.8/Codex.Setup.1.0.8.exe' ||
-              parsed.hostedAppLinks.win === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex.Setup.1.0.9.exe') {
-            parsed.hostedAppLinks.win = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex.Setup.1.0.10.exe';
+              parsed.hostedAppLinks.win === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex.Setup.1.0.9.exe' ||
+              parsed.hostedAppLinks.win === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex.Setup.1.0.10.exe') {
+            parsed.hostedAppLinks.win = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.11/Codex.Setup.1.0.11.exe';
           }
           if (parsed.hostedAppLinks.linux === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.7/Codex-1.0.7.AppImage' ||
               parsed.hostedAppLinks.linux === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.8/Codex-1.0.8.AppImage' ||
-              parsed.hostedAppLinks.linux === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9.AppImage') {
-            parsed.hostedAppLinks.linux = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10.AppImage';
+              parsed.hostedAppLinks.linux === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.9/Codex-1.0.9.AppImage' ||
+              parsed.hostedAppLinks.linux === 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.10/Codex-1.0.10.AppImage') {
+            parsed.hostedAppLinks.linux = 'https://github.com/codex612/codex-code-lab/releases/download/v1.0.11/Codex-1.0.11.AppImage';
           }
         }
         globalConfig = { ...globalConfig, ...parsed };
